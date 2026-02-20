@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>AI Presentation — Mini App</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --tg-bg: var(--tg-theme-bg-color, #0f0f1a);
+  --tg-text: var(--tg-theme-text-color, #ffffff);
+  --tg-hint: var(--tg-theme-hint-color, #8b8b9e);
+  --tg-link: var(--tg-theme-link-color, #6c8eff);
+  --tg-btn: var(--tg-theme-button-color, #6c8eff);
+  --tg-btn-text: var(--tg-theme-button-text-color, #ffffff);
+  --tg-secondary: var(--tg-theme-secondary-bg-color, #1a1a2e);
+
+  --accent: #6c8eff;
+  --accent2: #a78bfa;
+  --green: #34d399;
+  --amber: #fbbf24;
+  --red: #f87171;
+  --card: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.10);
+  --radius: 18px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html { height:100%; }
+body {
+  font-family: 'Sora', sans-serif;
+  background: var(--tg-bg);
+  color: var(--tg-text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+/* ── PAGES ── */
+.page { display: none; padding: 1.25rem 1rem 5rem; animation: fadeUp .3s ease; }
+.page.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── NAV ── */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--tg-secondary);
+  border-top: 1px solid var(--border);
+  display: flex; padding: .6rem 0 calc(.6rem + env(safe-area-inset-bottom));
+  z-index: 100;
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column; align-items: center;
+  gap: .2rem; cursor: pointer; padding: .3rem; transition: all .2s;
+}
+.nav-item .ni-icon { font-size: 1.35rem; transition: transform .2s; }
+.nav-item .ni-label { font-size: .65rem; font-weight: 600; color: var(--tg-hint); transition: color .2s; }
+.nav-item.active .ni-icon { transform: scale(1.15); }
+.nav-item.active .ni-label { color: var(--accent); }
+
+/* ── HEADER ── */
+.page-header { margin-bottom: 1.5rem; }
+.page-header h1 { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.6rem; line-height: 1.2; }
+.page-header p { color: var(--tg-hint); font-size: .85rem; margin-top: .35rem; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.card-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1rem; margin-bottom: .85rem; display: flex; align-items: center; gap: .5rem; }
+
+/* ── HERO CARD ── */
+.hero-card {
+  background: linear-gradient(135deg, #1a1a3e, #2d1b69, #1e3a8a);
+  border-radius: var(--radius);
+  padding: 1.75rem 1.5rem;
+  margin-bottom: 1.25rem;
+  position: relative; overflow: hidden;
+}
+.hero-card::before {
+  content: ''; position: absolute;
+  width: 200px; height: 200px; background: rgba(108,142,255,.15);
+  border-radius: 50%; top: -60px; right: -60px;
+}
+.hero-card h2 { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.4rem; margin-bottom: .4rem; position: relative; }
+.hero-card p { font-size: .82rem; opacity: .8; margin-bottom: 1.25rem; position: relative; line-height: 1.6; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  padding: .75rem 1.5rem; border-radius: 50px; border: none;
+  font-family: 'Sora', sans-serif; font-weight: 700; font-size: .9rem;
+  cursor: pointer; transition: all .2s; width: 100%;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:active { transform: scale(.97); background: #5a7aee; }
+.btn-secondary { background: rgba(255,255,255,.08); color: var(--tg-text); border: 1.5px solid var(--border); }
+.btn-secondary:active { transform: scale(.97); background: rgba(255,255,255,.14); }
+.btn-green { background: var(--green); color: #fff; }
+.btn-sm { padding: .5rem 1.1rem; font-size: .8rem; width: auto; }
+.btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 12px; }
+
+/* ── STYLE GRID ── */
+.style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.style-card {
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: 14px; padding: 1rem; cursor: pointer; transition: all .2s; text-align: center;
+}
+.style-card:active { transform: scale(.97); }
+.style-card.selected { border-color: var(--accent); background: rgba(108,142,255,.12); }
+.style-card .sc-icon { font-size: 1.75rem; margin-bottom: .4rem; }
+.style-card .sc-name { font-weight: 700; font-size: .85rem; }
+.style-card .sc-desc { font-size: .72rem; color: var(--tg-hint); margin-top: .15rem; }
+
+/* ── SLIDE COUNT ── */
+.count-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
+.count-btn {
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: 12px; padding: .65rem .4rem; text-align: center;
+  cursor: pointer; transition: all .2s; font-weight: 800;
+  font-family: 'Nunito', sans-serif; font-size: .95rem;
+}
+.count-btn.selected { border-color: var(--accent); background: rgba(108,142,255,.12); color: var(--accent); }
+.count-btn:active { transform: scale(.95); }
+
+/* ── LANG PILLS ── */
+.lang-pills { display: flex; gap: .5rem; }
+.lang-pill {
+  flex: 1; background: var(--card); border: 2px solid var(--border);
+  border-radius: 50px; padding: .55rem; text-align: center;
+  cursor: pointer; transition: all .2s; font-weight: 700; font-size: .85rem;
+}
+.lang-pill.selected { border-color: var(--accent); background: rgba(108,142,255,.12); color: var(--accent); }
+
+/* ── FORM ── */
+.form-field { margin-bottom: 1rem; }
+.form-field label { display: block; font-size: .8rem; font-weight: 700; color: var(--tg-hint); margin-bottom: .45rem; text-transform: uppercase; letter-spacing: .05em; }
+.form-field input, .form-field textarea {
+  width: 100%; background: var(--card); border: 1.5px solid var(--border);
+  border-radius: 12px; padding: .8rem 1rem; color: var(--tg-text);
+  font-family: 'Sora', sans-serif; font-size: .9rem; outline: none;
+  transition: border-color .2s; resize: none;
+}
+.form-field input:focus, .form-field textarea:focus { border-color: var(--accent); }
+
+/* ── STEPS ── */
+.steps { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
+.step {
+  flex: 1; height: 4px; border-radius: 10px; background: var(--border); transition: all .3s;
+}
+.step.active { background: var(--accent); }
+.step.done { background: var(--green); }
+.step-label { display: flex; justify-content: space-between; font-size: .72rem; color: var(--tg-hint); font-weight: 600; margin-top: .4rem; margin-bottom: 1.25rem; }
+
+/* ── PROGRESS GEN ── */
+.gen-progress { text-align: center; padding: 2.5rem 1rem; }
+.gen-spinner { font-size: 3.5rem; animation: spin 2s linear infinite; display: inline-block; margin-bottom: 1rem; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.gen-bar-bg { background: var(--border); border-radius: 10px; height: 8px; margin: 1.25rem 0 .5rem; overflow: hidden; }
+.gen-bar { background: linear-gradient(90deg, var(--accent), var(--accent2)); height: 8px; border-radius: 10px; transition: width .5s ease; }
+.gen-step-text { font-size: .82rem; color: var(--tg-hint); }
+
+/* ── RESULT ── */
+.result-hero { text-align: center; padding: 1.5rem; background: linear-gradient(135deg,rgba(108,142,255,.1),rgba(167,139,250,.1)); border-radius: var(--radius); margin-bottom: 1rem; }
+.result-icon { font-size: 3.5rem; margin-bottom: .75rem; }
+.result-score { font-family: 'Nunito', sans-serif; font-size: 2.5rem; font-weight: 900; color: var(--accent); }
+.dl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.dl-btn {
+  background: var(--card); border: 1.5px solid var(--border); border-radius: 14px;
+  padding: 1rem; text-align: center; cursor: pointer; transition: all .2s;
+}
+.dl-btn:active { transform: scale(.97); border-color: var(--accent); }
+.dl-btn .db-icon { font-size: 1.75rem; margin-bottom: .4rem; }
+.dl-btn .db-name { font-size: .8rem; font-weight: 700; }
+.dl-btn .db-sub { font-size: .7rem; color: var(--tg-hint); margin-top: .15rem; }
+
+/* ── PLANS ── */
+.plan-cards { display: flex; flex-direction: column; gap: .75rem; }
+.plan-card {
+  background: var(--card); border: 2px solid var(--border);
+  border-radius: var(--radius); padding: 1.25rem; cursor: pointer;
+  transition: all .2s; position: relative;
+}
+.plan-card:active { transform: scale(.99); }
+.plan-card.popular { border-color: var(--accent); }
+.plan-card.selected { border-color: var(--green); background: rgba(52,211,153,.07); }
+.plan-hot { position: absolute; top: -10px; right: 1rem; background: var(--amber); color: #000; font-size: .65rem; font-weight: 800; padding: .2rem .65rem; border-radius: 50px; }
+.plan-name { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.1rem; }
+.plan-price { font-family: 'Nunito', sans-serif; font-size: 1.6rem; font-weight: 900; color: var(--accent); margin: .25rem 0; }
+.plan-price span { font-size: .8rem; color: var(--tg-hint); font-weight: 400; }
+.plan-feats { display: flex; flex-direction: column; gap: .3rem; margin-top: .65rem; }
+.plan-feat { font-size: .78rem; color: var(--tg-hint); display: flex; align-items: center; gap: .4rem; }
+.plan-feat::before { content: "✓"; color: var(--green); font-weight: 800; }
+
+/* ── PAY METHODS ── */
+.pay-methods { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .6rem; margin-bottom: 1.25rem; }
+.pay-method {
+  background: var(--card); border: 2px solid var(--border); border-radius: 12px;
+  padding: .75rem .5rem; text-align: center; cursor: pointer; transition: all .2s;
+}
+.pay-method.active { border-color: var(--accent); }
+.pay-method .pm-icon { font-size: 1.4rem; }
+.pay-method .pm-name { font-size: .7rem; font-weight: 700; margin-top: .2rem; }
+
+/* ── STAT CARDS ── */
+.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1rem; }
+.stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1rem; text-align: center; }
+.stat-box .sb-val { font-family: 'Nunito', sans-serif; font-size: 1.6rem; font-weight: 900; color: var(--accent); }
+.stat-box .sb-lbl { font-size: .72rem; color: var(--tg-hint); font-weight: 600; margin-top: .2rem; }
+
+/* ── TEMPLATES ── */
+.tmpl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.tmpl-card {
+  background: var(--card); border: 1.5px solid var(--border); border-radius: 14px;
+  padding: 1.1rem; cursor: pointer; transition: all .2s;
+}
+.tmpl-card:active { transform: scale(.97); border-color: var(--accent); }
+.tmpl-icon { font-size: 1.75rem; margin-bottom: .5rem; }
+.tmpl-name { font-weight: 800; font-size: .88rem; margin-bottom: .2rem; }
+.tmpl-desc { font-size: .72rem; color: var(--tg-hint); }
+.tmpl-slides { font-size: .7rem; color: var(--accent); font-weight: 700; margin-top: .4rem; }
+
+/* ── REFERRAL ── */
+.ref-link-box { background: rgba(108,142,255,.1); border: 1.5px solid rgba(108,142,255,.3); border-radius: 12px; padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: .78rem; word-break: break-all; margin-bottom: 1rem; }
+.ref-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .6rem; margin-bottom: 1rem; }
+.ref-stat { background: var(--card); border-radius: 12px; padding: .85rem; text-align: center; }
+.ref-stat .rv { font-family: 'Nunito', sans-serif; font-size: 1.3rem; font-weight: 900; color: var(--green); }
+.ref-stat .rl { font-size: .68rem; color: var(--tg-hint); font-weight: 600; }
+
+/* ── TOAST ── */
+.toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%) translateY(-80px); background: #1e2a3a; color: #fff; padding: .75rem 1.5rem; border-radius: 50px; font-size: .85rem; font-weight: 600; z-index: 999; transition: transform .3s ease; white-space: nowrap; border: 1px solid var(--border); }
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ── PROFILE ── */
+.prof-avatar { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg,var(--accent),var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; margin: 0 auto 1rem; border: 3px solid var(--border); }
+.prof-info { text-align: center; margin-bottom: 1.5rem; }
+.prof-name { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.3rem; }
+.prof-plan { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .85rem; border-radius: 50px; font-size: .78rem; font-weight: 700; margin-top: .4rem; }
+.plan-free { background: rgba(255,255,255,.08); color: var(--tg-hint); }
+.plan-premium { background: linear-gradient(135deg,rgba(251,191,36,.2),rgba(245,158,11,.2)); color: var(--amber); border: 1px solid rgba(251,191,36,.3); }
+
+/* ── HISTORY ── */
+.hist-item { display: flex; align-items: center; gap: .85rem; padding: .85rem; background: var(--card); border-radius: 12px; margin-bottom: .6rem; border: 1px solid var(--border); }
+.hist-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+.hist-info { flex: 1; min-width: 0; }
+.hist-info h4 { font-weight: 700; font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-info p { font-size: .72rem; color: var(--tg-hint); margin-top: .1rem; }
+.hist-score { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1rem; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- ── HOME ── -->
+<div class="page active" id="page-home">
+  <div class="hero-card">
+    <h2>🎨 AI Prezentatsiya</h2>
+    <p>Professional slaydlar yarating — mavzu bering, AI qolganini qiladi!</p>
+    <button class="btn btn-primary" onclick="showPage('create')">✨ Yaratishni boshlash</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚡ Tezkor yaratish</div>
+    <div class="tmpl-grid" id="quickTemplates"></div>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-box"><div class="sb-val" id="hStatPres">0</div><div class="sb-lbl">🎨 Prezentatsiya</div></div>
+    <div class="stat-box"><div class="sb-val" id="hStatSlides">0</div><div class="sb-lbl">📄 Jami slaydlar</div></div>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg,rgba(252,191,36,.07),rgba(245,158,11,.07));border-color:rgba(251,191,36,.2);">
+    <div class="card-title">⭐ Premium afzalliklari</div>
+    <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.82rem;">
+      <div>✅ Cheksiz prezentatsiyalar</div>
+      <div>✅ AI yordamchi (cheksiz)</div>
+      <div>✅ PPTX + PDF + Rasmlar</div>
+      <div>✅ 8 ta professional shablon</div>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:1rem;" onclick="showPage('premium')">👑 Premium olish →</button>
+  </div>
+</div>
+
+<!-- ── CREATE ── -->
+<div class="page" id="page-create">
+  <div class="page-header">
+    <h1>🎨 Yangi Prezentatsiya</h1>
+    <p>Quyidagi bosqichlarni bajaring</p>
+  </div>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step active" id="step1"></div>
+    <div class="step" id="step2"></div>
+    <div class="step" id="step3"></div>
+    <div class="step" id="step4"></div>
+  </div>
+  <div class="step-label">
+    <span>Mavzu</span><span>Slaydlar</span><span>Uslub</span><span>Til</span>
+  </div>
+
+  <!-- STEP 1: Topic -->
+  <div id="createStep1">
+    <div class="form-field">
+      <label>📝 Mavzuni kiriting</label>
+      <textarea id="topicInput" rows="3" placeholder="Misol: Sun'iy intellekt va kelajak, Marketing strategiyasi 2025, Python dasturlash asoslari..."></textarea>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.25rem;" id="topicSuggestions"></div>
+    <button class="btn btn-primary" onclick="goStep(2)">Davom etish →</button>
+  </div>
+
+  <!-- STEP 2: Slide count -->
+  <div id="createStep2" style="display:none;">
+    <div class="card-title" style="margin-bottom:1rem;">📄 Nechta slayd?</div>
+    <div class="count-grid" id="countGrid"></div>
+    <div style="display:flex;gap:.6rem;margin-top:1.25rem;">
+      <button class="btn btn-secondary" onclick="goStep(1)" style="flex:1;">← Orqaga</button>
+      <button class="btn btn-primary" onclick="goStep(3)" style="flex:2;">Davom →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Style -->
+  <div id="createStep3" style="display:none;">
+    <div class="card-title" style="margin-bottom:1rem;">🎨 Dizayn uslubi</div>
+    <div class="style-grid" id="styleGrid"></div>
+    <div style="display:flex;gap:.6rem;margin-top:1.25rem;">
+      <button class="btn btn-secondary" onclick="goStep(2)" style="flex:1;">← Orqaga</button>
+      <button class="btn btn-primary" onclick="goStep(4)" style="flex:2;">Davom →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4: Language -->
+  <div id="createStep4" style="display:none;">
+    <div class="card-title" style="margin-bottom:1rem;">🌐 Prezentatsiya tili</div>
+    <div class="lang-pills" id="langPills"></div>
+
+    <!-- Confirm -->
+    <div class="card" style="margin-top:1.25rem;" id="confirmCard">
+      <div class="card-title">✅ Tasdiqlash</div>
+      <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.85rem;" id="confirmDetails"></div>
+    </div>
+    <div style="display:flex;gap:.6rem;margin-top:1rem;">
+      <button class="btn btn-secondary" onclick="goStep(3)" style="flex:1;">← Orqaga</button>
+      <button class="btn btn-primary" onclick="startGeneration()" style="flex:2;">🚀 Yaratish</button>
+    </div>
+  </div>
+
+  <!-- GENERATING -->
+  <div id="genProgress" style="display:none;">
+    <div class="gen-progress">
+      <div class="gen-spinner">⚙️</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:1.3rem;" id="genTitle">AI ishlamoqda...</div>
+      <div class="gen-bar-bg"><div class="gen-bar" id="genBar" style="width:0%"></div></div>
+      <div class="gen-step-text" id="genStepText">Boshlanyapti...</div>
+      <div style="font-size:.78rem;color:var(--tg-hint);margin-top:.5rem;" id="genPercent">0%</div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="genResult" style="display:none;">
+    <div class="result-hero">
+      <div class="result-icon">🎉</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:1.3rem;margin-bottom:.25rem;">Tayyor!</div>
+      <div style="font-size:.85rem;color:var(--tg-hint);" id="resultMeta"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📥 Yuklab olish</div>
+      <div class="dl-grid">
+        <div class="dl-btn" onclick="downloadFormat('pptx')">
+          <div class="db-icon">📊</div>
+          <div class="db-name">PowerPoint</div>
+          <div class="db-sub">.pptx format</div>
+        </div>
+        <div class="dl-btn" onclick="downloadFormat('pdf')">
+          <div class="db-icon">📄</div>
+          <div class="db-name">PDF</div>
+          <div class="db-sub">.pdf format</div>
+        </div>
+        <div class="dl-btn" onclick="downloadFormat('images')">
+          <div class="db-icon">🖼</div>
+          <div class="db-name">Rasmlar</div>
+          <div class="db-sub">.zip (PNG)</div>
+        </div>
+        <div class="dl-btn" onclick="downloadFormat('google')">
+          <div class="db-icon">🌐</div>
+          <div class="db-name">Google Slides</div>
+          <div class="db-sub">Online</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:.6rem;">
+      <button class="btn btn-secondary" onclick="resetCreate()">🔄 Yangi yaratish</button>
+      <button class="btn btn-secondary" onclick="showPage('home')">🏠 Bosh sahifa</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TEMPLATES ── -->
+<div class="page" id="page-templates">
+  <div class="page-header">
+    <h1>📋 Shablonlar</h1>
+    <p>Tayyor dizaynlar — tez va professional</p>
+  </div>
+  <div class="tmpl-grid" id="allTemplates"></div>
+</div>
+
+<!-- ── PREMIUM ── -->
+<div class="page" id="page-premium">
+  <div class="page-header">
+    <h1>⭐ Premium</h1>
+    <p>Cheksiz imkoniyatlar</p>
+  </div>
+
+  <div class="plan-cards" id="planCards"></div>
+
+  <div class="card" style="margin-top:1rem;" id="paySection" style="display:none;">
+    <div class="card-title">💳 To'lov usuli</div>
+    <div class="pay-methods" id="payMethods">
+      <div class="pay-method active" onclick="selectPayMethod('click',this)">
+        <div class="pm-icon">🏦</div>
+        <div class="pm-name">Click</div>
+      </div>
+      <div class="pay-method" onclick="selectPayMethod('payme',this)">
+        <div class="pm-icon">💚</div>
+        <div class="pm-name">Payme</div>
+      </div>
+      <div class="pay-method" onclick="selectPayMethod('balance',this)">
+        <div class="pm-icon">💰</div>
+        <div class="pm-name">Balans</div>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="payBtn" onclick="processPay()">💳 To'lash</button>
+  </div>
+</div>
+
+<!-- ── STATS ── -->
+<div class="page" id="page-stats">
+  <div class="page-header">
+    <h1>📊 Statistika</h1>
+    <p>Faoliyatingiz tahlili</p>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat-box"><div class="sb-val" id="sPres">0</div><div class="sb-lbl">🎨 Prezentatsiya</div></div>
+    <div class="stat-box"><div class="sb-val" id="sSlides">0</div><div class="sb-lbl">📄 Slaydlar</div></div>
+    <div class="stat-box"><div class="sb-val" id="sAi">0</div><div class="sb-lbl">🤖 AI so'rov</div></div>
+    <div class="stat-box"><div class="sb-val" id="sRef">0</div><div class="sb-lbl">👥 Referral</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💰 Balans va daromad</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
+      <div style="font-size:.85rem;color:var(--tg-hint);">Joriy balans</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:1.3rem;color:var(--green);" id="sBalance">0 so'm</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:.85rem;color:var(--tg-hint);">Referral daromad</div>
+      <div style="font-family:'Nunito',sans-serif;font-weight:800;color:var(--amber);" id="sEarned">0 so'm</div>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:1rem;" onclick="showPage('profile')">👥 Referral dasturi →</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🕐 Oxirgi prezentatsiyalar</div>
+    <div id="historyList">
+      <div style="color:var(--tg-hint);font-size:.85rem;padding:.5rem 0;">Hali prezentatsiya yo'q</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PROFILE ── -->
+<div class="page" id="page-profile">
+  <div class="page-header" style="margin-bottom:1rem;">
+    <h1>👤 Profil</h1>
+  </div>
+
+  <div class="card" style="text-align:center;">
+    <div class="prof-avatar" id="profAv">😊</div>
+    <div class="prof-info">
+      <div class="prof-name" id="profName">Foydalanuvchi</div>
+      <div class="prof-plan plan-free" id="profPlanBadge">🎁 Bepul tarif</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👥 Referral Dasturi</div>
+    <div style="font-size:.82rem;color:var(--tg-hint);margin-bottom:.75rem;">Har bir do'stingiz uchun <strong style="color:var(--green);">5,000 so'm</strong> oling!</div>
+    <div class="ref-stats">
+      <div class="ref-stat"><div class="rv" id="rCount">0</div><div class="rl">Do'stlar</div></div>
+      <div class="ref-stat"><div class="rv" id="rEarned" style="color:var(--amber);">0</div><div class="rl">Daromad</div></div>
+      <div class="ref-stat"><div class="rv" id="rBalance" style="color:var(--green);">0</div><div class="rl">Balans</div></div>
+    </div>
+    <div class="ref-link-box" id="refLink">https://t.me/YourBot?start=REF123</div>
+    <div style="display:flex;gap:.6rem;">
+      <button class="btn btn-primary" onclick="copyRefLink()" style="flex:2;">📋 Nusxa olish</button>
+      <button class="btn btn-secondary" onclick="shareRefLink()" style="flex:1;">📤</button>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:.6rem;">
+    <button class="btn btn-secondary" onclick="showPage('premium')">⭐ Premium olish</button>
+    <button class="btn btn-secondary" style="color:var(--red);border-color:rgba(248,113,113,.3);" onclick="showToast('Tez kunda...')">🌐 Tilni o'zgartirish</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── TELEGRAM WEBAPP INIT ──────────────────────────
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.MainButton.hide();
+}
+
+// ── STATE ─────────────────────────────────────────
+const STATE = {
+  user: { name: 'Foydalanuvchi', plan: 'free', balance: 0, referrals: 0, earned: 0, presCount: 0, slidesTotal: 0, aiUsed: 0 },
+  create: { topic: '', slides: 10, style: 'business', lang: 'uz' },
+  selectedPlan: 'pro',
+  selectedPayMethod: 'click',
+  history: [],
+};
+
+// Try get user data from URL params
+const urlParams = new URLSearchParams(window.location.search);
+const urlUid = urlParams.get('uid');
+if (tg?.initDataUnsafe?.user) {
+  STATE.user.name = tg.initDataUnsafe.user.first_name || 'Foydalanuvchi';
+}
+
+// ── DATA ──────────────────────────────────────────
+const STYLES = [
+  {id:'business', emoji:'💼', name:'Business',   desc:'Professional'},
+  {id:'creative', emoji:'🎨', name:'Creative',   desc:'Rangdor'},
+  {id:'academic', emoji:'🎓', name:'Academic',   desc:'Ilmiy'},
+  {id:'startup',  emoji:'🚀', name:'Startup',    desc:'Dinamik'},
+  {id:'dark',     emoji:'🌙', name:'Dark Mode',  desc:'Qora fon'},
+  {id:'minimal',  emoji:'⬜', name:'Minimal',    desc:'Sof dizayn'},
+];
+
+const SLIDE_COUNTS = [5, 8, 10, 12, 15, 20, 25, 30];
+
+const LANGS = [
+  {code:'uz', flag:'🇺🇿', name:"O'zbek"},
+  {code:'ru', flag:'🇷🇺', name:'Русский'},
+  {code:'en', flag:'🇬🇧', name:'English'},
+];
+
+const TEMPLATES = [
+  {id:'t1', emoji:'💼', name:'Biznes taklif',   slides:10, style:'business'},
+  {id:'t2', emoji:'🎓', name:'Kurs taqdimoti',  slides:12, style:'academic'},
+  {id:'t3', emoji:'🚀', name:'Startup pitch',   slides:8,  style:'startup'},
+  {id:'t4', emoji:'📈', name:'Marketing',        slides:15, style:'business'},
+  {id:'t5', emoji:'🌟', name:'Portfolio',        slides:10, style:'creative'},
+  {id:'t6', emoji:'📊', name:'Moliyaviy',        slides:12, style:'minimal'},
+  {id:'t7', emoji:'🏆', name:'Yillik hisobot',   slides:20, style:'business'},
+  {id:'t8', emoji:'🎯', name:'Loyiha rejasi',    slides:10, style:'startup'},
+];
+
+const PLANS = {
+  basic: { name:'Basic', price:29000, slides:10, ai:5,  badge:'' },
+  pro:   { name:'Pro 🔥', price:59000, slides:30, ai:30, badge:'Ommabop' },
+  ultra: { name:'Ultra ⚡', price:99000, slides:-1, ai:-1, badge:'VIP' },
+};
+
+const TOPIC_SUGGESTIONS = [
+  "Sun'iy intellekt", "Marketing strategiyasi", "Python dasturlash",
+  "Biznes rejasi", "Startup", "Ta'lim islohotlari",
+];
+
+const GEN_STEPS = [
+  {text:"🧠 Mavzu tahlil qilinmoqda...", pct:20},
+  {text:"📝 Slayd mazmunlari yaratilmoqda...", pct:50},
+  {text:"🎨 Dizayn qo'llanilmoqda...", pct:75},
+  {text:"📦 Fayl tayyorlanmoqda...", pct:95},
+  {text:"✅ Tayyor!", pct:100},
+];
+
+// ── NAVIGATION ────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === name);
+  });
+  window.scrollTo(0, 0);
+  if (name === 'stats') updateStats();
+  if (name === 'profile') updateProfile();
+  if (name === 'home') updateHome();
+}
+
+// ── INIT ─────────────────────────────────────────
+function init() {
+  renderNav();
+  renderStyleGrid();
+  renderCountGrid();
+  renderLangPills();
+  renderTopicSuggestions();
+  renderTemplates();
+  renderPlans();
+  updateHome();
+  updateProfile();
+}
+
+function renderNav() {
+  const navItems = [
+    {page:'home',      icon:'🏠', label:'Bosh'},
+    {page:'create',    icon:'✨', label:'Yaratish'},
+    {page:'templates', icon:'📋', label:'Shablonlar'},
+    {page:'stats',     icon:'📊', label:'Statistika'},
+    {page:'profile',   icon:'👤', label:'Profil'},
+  ];
+  const nav = document.createElement('div');
+  nav.className = 'bottom-nav';
+  nav.innerHTML = navItems.map(n => `
+    <div class="nav-item${n.page==='home'?' active':''}" data-page="${n.page}" onclick="showPage('${n.page}')">
+      <div class="ni-icon">${n.icon}</div>
+      <div class="ni-label">${n.label}</div>
+    </div>`).join('');
+  document.body.appendChild(nav);
+}
+
+function renderStyleGrid() {
+  document.getElementById('styleGrid').innerHTML = STYLES.map(s => `
+    <div class="style-card${s.id===STATE.create.style?' selected':''}" onclick="selectStyle('${s.id}',this)">
+      <div class="sc-icon">${s.emoji}</div>
+      <div class="sc-name">${s.name}</div>
+      <div class="sc-desc">${s.desc}</div>
+    </div>`).join('');
+}
+
+function renderCountGrid() {
+  document.getElementById('countGrid').innerHTML = SLIDE_COUNTS.map(n => `
+    <div class="count-btn${n===STATE.create.slides?' selected':''}" onclick="selectCount(${n},this)">${n}</div>`).join('');
+}
+
+function renderLangPills() {
+  document.getElementById('langPills').innerHTML = LANGS.map(l => `
+    <div class="lang-pill${l.code===STATE.create.lang?' selected':''}" onclick="selectLang('${l.code}',this)">
+      ${l.flag} ${l.name}
+    </div>`).join('');
+}
+
+function renderTopicSuggestions() {
+  document.getElementById('topicSuggestions').innerHTML = TOPIC_SUGGESTIONS.map(s => `
+    <button class="btn btn-sm btn-secondary" style="width:auto;" onclick="setTopic('${s}')">${s}</button>`).join('');
+}
+
+function renderTemplates() {
+  const html = TEMPLATES.map(t => `
+    <div class="tmpl-card" onclick="useTemplate('${t.id}')">
+      <div class="tmpl-icon">${t.emoji}</div>
+      <div class="tmpl-name">${t.name}</div>
+      <div class="tmpl-slides">📄 ${t.slides} slayd</div>
+    </div>`).join('');
+  const quickHtml = TEMPLATES.slice(0,4).map(t => `
+    <div class="tmpl-card" onclick="useTemplate('${t.id}')">
+      <div class="tmpl-icon">${t.emoji}</div>
+      <div class="tmpl-name">${t.name}</div>
+      <div class="tmpl-slides">📄 ${t.slides} slayd</div>
+    </div>`).join('');
+  document.getElementById('allTemplates').innerHTML = html;
+  document.getElementById('quickTemplates').innerHTML = quickHtml;
+}
+
+function renderPlans() {
+  document.getElementById('planCards').innerHTML = Object.entries(PLANS).map(([id, p]) => {
+    const price = p.price.toLocaleString('ru-RU');
+    const slides = p.slides === -1 ? 'Cheksiz' : p.slides;
+    const ai = p.ai === -1 ? 'Cheksiz' : p.ai;
+    return `<div class="plan-card${id==='pro'?' popular':''}" id="plan_${id}" onclick="selectPlan('${id}')">
+      ${p.badge ? `<div class="plan-hot">${p.badge}</div>` : ''}
+      <div class="plan-name">${p.name}</div>
+      <div class="plan-price">${price} <span>so'm/oy</span></div>
+      <div class="plan-feats">
+        <div class="plan-feat">${slides} ta prezentatsiya</div>
+        <div class="plan-feat">${ai} AI so'rov</div>
+        <div class="plan-feat">PPTX + PDF + Rasmlar</div>
+        <div class="plan-feat">Barcha shablonlar</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── CREATE FLOW ───────────────────────────────────
+let currentStep = 1;
+
+function goStep(n) {
+  if (n === 2 && !document.getElementById('topicInput').value.trim()) {
+    showToast('⚠️ Mavzuni kiriting!'); return;
+  }
+  STATE.create.topic = document.getElementById('topicInput').value.trim();
+  currentStep = n;
+  [1,2,3,4].forEach(i => {
+    document.getElementById('createStep'+i).style.display = i===n ? 'block' : 'none';
+    const stepEl = document.getElementById('step'+i);
+    if (i < n) { stepEl.className='step done'; }
+    else if (i === n) { stepEl.className='step active'; }
+    else { stepEl.className='step'; }
+  });
+  if (n === 4) updateConfirm();
+}
+
+function updateConfirm() {
+  const style = STYLES.find(s => s.id === STATE.create.style);
+  const lang = LANGS.find(l => l.code === STATE.create.lang);
+  document.getElementById('confirmDetails').innerHTML = `
+    <div>📝 Mavzu: <strong>${STATE.create.topic}</strong></div>
+    <div>📄 Slaydlar: <strong>${STATE.create.slides} ta</strong></div>
+    <div>🎨 Uslub: <strong>${style?.emoji} ${style?.name}</strong></div>
+    <div>🌐 Til: <strong>${lang?.flag} ${lang?.name}</strong></div>`;
+}
+
+function selectStyle(id, el) {
+  STATE.create.style = id;
+  document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectCount(n, el) {
+  STATE.create.slides = n;
+  document.querySelectorAll('.count-btn').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function selectLang(code, el) {
+  STATE.create.lang = code;
+  document.querySelectorAll('.lang-pill').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  updateConfirm();
+}
+
+function setTopic(topic) {
+  document.getElementById('topicInput').value = topic;
+  STATE.create.topic = topic;
+}
+
+function useTemplate(id) {
+  const t = TEMPLATES.find(t => t.id === id);
+  if (!t) return;
+  STATE.create.style = t.style;
+  STATE.create.slides = t.slides;
+  showPage('create');
+  renderStyleGrid(); renderCountGrid();
+  showToast(`✅ ${t.name} shabloni tanlandi!`);
+}
+
+async function startGeneration() {
+  // Hide steps, show progress
+  document.getElementById('createStep4').style.display = 'none';
+  document.getElementById('genProgress').style.display = 'block';
+
+  for (const s of GEN_STEPS) {
+    await sleep(900);
+    document.getElementById('genBar').style.width = s.pct + '%';
+    document.getElementById('genPercent').textContent = s.pct + '%';
+    document.getElementById('genStepText').textContent = s.text;
+  }
+
+  await sleep(400);
+  document.getElementById('genProgress').style.display = 'none';
+  document.getElementById('genResult').style.display = 'block';
+
+  // Scroll to top and clear steps indicator
+  [1,2,3,4].forEach(i => document.getElementById('step'+i).className='step done');
+
+  const style = STYLES.find(s => s.id === STATE.create.style);
+  const lang = LANGS.find(l => l.code === STATE.create.lang);
+  document.getElementById('resultMeta').textContent =
+    `${STATE.create.slides} slayd · ${style?.name} · ${lang?.name}`;
+
+  // Update stats
+  STATE.user.presCount++;
+  STATE.user.slidesTotal += STATE.create.slides;
+  STATE.user.aiUsed++;
+  STATE.history.unshift({
+    topic: STATE.create.topic, slides: STATE.create.slides,
+    style: style?.name, date: new Date().toLocaleDateString('uz-UZ')
+  });
+
+  updateHome();
+  if (tg) tg.HapticFeedback?.notificationOccurred('success');
+}
+
+function resetCreate() {
+  currentStep = 1;
+  document.getElementById('topicInput').value = '';
+  document.getElementById('genResult').style.display = 'none';
+  document.getElementById('genProgress').style.display = 'none';
+  [1,2,3,4].forEach(i => {
+    document.getElementById('createStep'+i).style.display = i===1?'block':'none';
+    document.getElementById('step'+i).className='step'+(i===1?' active':'');
+  });
+}
+
+function downloadFormat(fmt) {
+  const fmtNames = {pptx:'PowerPoint', pdf:'PDF', images:'Rasmlar (ZIP)', google:'Google Slides'};
+  showToast(`📥 ${fmtNames[fmt]} tayyorlanmoqda...`);
+  if (tg) tg.HapticFeedback?.impactOccurred('medium');
+}
+
+// ── PREMIUM ───────────────────────────────────────
+function selectPlan(id) {
+  STATE.selectedPlan = id;
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('plan_'+id)?.classList.add('selected');
+  document.getElementById('paySection').style.display = 'block';
+  const plan = PLANS[id];
+  document.getElementById('payBtn').textContent = `💳 To'lash — ${plan.price.toLocaleString('ru-RU')} so'm`;
+}
+
+function selectPayMethod(method, el) {
+  STATE.selectedPayMethod = method;
+  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('active'));
+  el.classList.add('active');
+}
+
+async function processPay() {
+  const plan = PLANS[STATE.selectedPlan];
+  document.getElementById('payBtn').textContent = '⏳ Kutib turing...';
+  document.getElementById('payBtn').disabled = true;
+  await sleep(2000);
+  STATE.user.plan = STATE.selectedPlan;
+  document.getElementById('payBtn').textContent = '✅ Premium faollashtirildi!';
+  showToast('🎉 Premium tarif yoqildi!');
+  updateProfile();
+  if (tg) tg.HapticFeedback?.notificationOccurred('success');
+}
+
+// ── PROFILE & STATS ───────────────────────────────
+function updateHome() {
+  document.getElementById('hStatPres').textContent = STATE.user.presCount;
+  document.getElementById('hStatSlides').textContent = STATE.user.slidesTotal;
+}
+
+function updateStats() {
+  document.getElementById('sPres').textContent = STATE.user.presCount;
+  document.getElementById('sSlides').textContent = STATE.user.slidesTotal;
+  document.getElementById('sAi').textContent = STATE.user.aiUsed;
+  document.getElementById('sRef').textContent = STATE.user.referrals;
+  document.getElementById('sBalance').textContent = STATE.user.balance.toLocaleString('ru-RU') + ' so\'m';
+  document.getElementById('sEarned').textContent = STATE.user.earned.toLocaleString('ru-RU') + ' so\'m';
+  const hist = document.getElementById('historyList');
+  if (!STATE.history.length) {
+    hist.innerHTML = '<div style="color:var(--tg-hint);font-size:.85rem;padding:.5rem 0;">Hali prezentatsiya yo\'q</div>';
+    return;
+  }
+  hist.innerHTML = STATE.history.slice(0,5).map(h => `
+    <div class="hist-item">
+      <div class="hist-icon" style="background:rgba(108,142,255,.12);">🎨</div>
+      <div class="hist-info"><h4>${h.topic}</h4><p>${h.style} · ${h.slides} slayd · ${h.date}</p></div>
+      <div class="hist-score">${h.slides}</div>
+    </div>`).join('');
+}
+
+function updateProfile() {
+  const isPrem = STATE.user.plan !== 'free';
+  const planName = isPrem ? PLANS[STATE.user.plan]?.name : 'Bepul tarif';
+  document.getElementById('profName').textContent = STATE.user.name;
+  const badge = document.getElementById('profPlanBadge');
+  badge.textContent = isPrem ? `👑 ${planName}` : '🎁 Bepul tarif';
+  badge.className = 'prof-plan ' + (isPrem ? 'plan-premium' : 'plan-free');
+  document.getElementById('rCount').textContent = STATE.user.referrals;
+  document.getElementById('rEarned').textContent = STATE.user.earned.toLocaleString('ru-RU');
+  document.getElementById('rBalance').textContent = STATE.user.balance.toLocaleString('ru-RU');
+  const uid = urlUid || '12345';
+  document.getElementById('refLink').textContent = `https://t.me/YourBot?start=REF${uid}`;
+}
+
+// ── REFERRAL ──────────────────────────────────────
+function copyRefLink() {
+  const link = document.getElementById('refLink').textContent;
+  navigator.clipboard?.writeText(link).then(() => showToast('📋 Havola nusxa olindi!'));
+  if (tg) tg.HapticFeedback?.impactOccurred('light');
+}
+
+function shareRefLink() {
+  const link = document.getElementById('refLink').textContent;
+  if (tg) tg.switchInlineQuery(`🎨 AI Presentation Bot!\n${link}`, ['users']);
+  else showToast('Telegram da oching!');
+}
+
+// ── UTILS ─────────────────────────────────────────
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── START ─────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
