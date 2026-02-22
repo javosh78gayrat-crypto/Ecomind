@@ -2,906 +2,1485 @@
 <html lang="uz">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
-<title>AI Presentation — Mini App</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>QuizBot Pro</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
-:root {
-  --tg-bg: var(--tg-theme-bg-color, #0f0f1a);
-  --tg-text: var(--tg-theme-text-color, #ffffff);
-  --tg-hint: var(--tg-theme-hint-color, #8b8b9e);
-  --tg-link: var(--tg-theme-link-color, #6c8eff);
-  --tg-btn: var(--tg-theme-button-color, #6c8eff);
-  --tg-btn-text: var(--tg-theme-button-text-color, #ffffff);
-  --tg-secondary: var(--tg-theme-secondary-bg-color, #1a1a2e);
-
-  --accent: #6c8eff;
-  --accent2: #a78bfa;
-  --green: #34d399;
-  --amber: #fbbf24;
-  --red: #f87171;
-  --card: rgba(255,255,255,0.06);
-  --border: rgba(255,255,255,0.10);
-  --radius: 18px;
+:root{
+  --bg:#07090f;
+  --bg2:#0d1017;
+  --card:#111520;
+  --card2:#161b28;
+  --border:rgba(255,255,255,.07);
+  --text:#e8eeff;
+  --muted:#5a6488;
+  --accent:#5b7bff;
+  --accent2:#8b5cf6;
+  --green:#00e08a;
+  --amber:#f59e0b;
+  --red:#f43f5e;
+  --purple:#a855f7;
+  --teal:#14b8a6;
+  --r:14px;
+  --grad:linear-gradient(135deg,#5b7bff,#8b5cf6);
 }
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
 
-* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-html { height:100%; }
-body {
-  font-family: 'Sora', sans-serif;
-  background: var(--tg-bg);
-  color: var(--tg-text);
-  min-height: 100vh;
-  overflow-x: hidden;
+/* PAGES */
+.page{display:none;flex:1;overflow-y:auto;padding-bottom:84px;}
+.page.active{display:block;animation:fadeUp .28s cubic-bezier(.4,0,.2,1);}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+
+::-webkit-scrollbar{width:2px;}
+::-webkit-scrollbar-thumb{background:rgba(91,123,255,.3);border-radius:10px;}
+
+/* BOTTOM NAV */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;z-index:100;
+  background:rgba(7,9,15,.92);
+  backdrop-filter:blur(24px);
+  border-top:1px solid var(--border);
+  display:flex;
+  padding-bottom:env(safe-area-inset-bottom);
 }
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;padding:.6rem .3rem;cursor:pointer;gap:.2rem;position:relative;}
+.bni-icon{font-size:1.2rem;transition:transform .25s cubic-bezier(.34,1.56,.64,1);}
+.bni-label{font-size:.55rem;font-weight:700;color:var(--muted);transition:color .2s;letter-spacing:.06em;text-transform:uppercase;}
+.bni.active .bni-label{color:var(--accent);}
+.bni.active .bni-icon{transform:scale(1.2);}
+.bni.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2px;background:var(--accent);border-radius:0 0 4px 4px;}
 
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+/* HEADER */
+.phead{padding:1.1rem 1.1rem .4rem;}
+.phead h1{font-family:'Sora',sans-serif;font-weight:800;font-size:1.4rem;line-height:1.2;letter-spacing:-.02em;}
+.phead p{color:var(--muted);font-size:.75rem;margin-top:.2rem;}
+.back-btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:.4rem .9rem;border-radius:50px;font-weight:600;font-size:.75rem;margin-bottom:.75rem;display:inline-flex;align-items:center;gap:.35rem;cursor:pointer;}
 
-/* ── PAGES ── */
-.page { display: none; padding: 1.25rem 1rem 5rem; animation: fadeUp .3s ease; }
-.page.active { display: block; }
-@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-
-/* ── NAV ── */
-.bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--tg-secondary);
-  border-top: 1px solid var(--border);
-  display: flex; padding: .6rem 0 calc(.6rem + env(safe-area-inset-bottom));
-  z-index: 100;
+/* HERO BANNER */
+.hero-banner{
+  margin:.25rem 1.1rem .75rem;
+  border-radius:18px;padding:1.35rem;
+  position:relative;overflow:hidden;min-height:130px;
+  display:flex;flex-direction:column;justify-content:flex-end;
+  cursor:pointer;
 }
-.nav-item {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  gap: .2rem; cursor: pointer; padding: .3rem; transition: all .2s;
+.hb-bg{position:absolute;inset:0;z-index:0;}
+.hb-noise{position:absolute;inset:0;opacity:.04;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");z-index:1;}
+.hb-circle1{position:absolute;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.05);top:-50px;right:-30px;z-index:1;}
+.hb-circle2{position:absolute;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.04);bottom:-20px;left:20px;z-index:1;}
+.hb-emoji{position:absolute;right:1.1rem;top:50%;transform:translateY(-50%);font-size:3rem;z-index:2;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5));}
+.hb-content{position:relative;z-index:2;}
+.hero-banner h2{font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;margin-bottom:.25rem;letter-spacing:-.01em;}
+.hero-banner p{font-size:.73rem;opacity:.75;margin-bottom:.7rem;max-width:62%;}
+.hb-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;padding:.38rem 1rem;border-radius:50px;font-weight:700;font-size:.72rem;display:inline-flex;align-items:center;gap:.35rem;backdrop-filter:blur(8px);}
+
+.slider-dots{display:flex;justify-content:center;gap:.35rem;margin-bottom:.75rem;}
+.sdot{width:5px;height:5px;border-radius:50%;background:var(--border);transition:all .3s;}
+.sdot.active{background:var(--accent);width:16px;border-radius:10px;}
+
+/* SECTION */
+.section{padding:.6rem 1.1rem;}
+.sec-title{font-family:'Sora',sans-serif;font-weight:700;font-size:.7rem;margin-bottom:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+
+/* ACTION CARDS */
+.action-list{display:flex;flex-direction:column;gap:.5rem;}
+.action-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:.9rem 1rem;display:flex;align-items:center;gap:.75rem;
+  cursor:pointer;transition:all .18s;
 }
-.nav-item .ni-icon { font-size: 1.35rem; transition: transform .2s; }
-.nav-item .ni-label { font-size: .65rem; font-weight: 600; color: var(--tg-hint); transition: color .2s; }
-.nav-item.active .ni-icon { transform: scale(1.15); }
-.nav-item.active .ni-label { color: var(--accent); }
+.action-card:active{transform:scale(.99);background:var(--card2);}
+.ac-icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.ac-body{flex:1;min-width:0;}
+.ac-body h3{font-weight:700;font-size:.85rem;margin-bottom:.1rem;display:flex;align-items:center;gap:.35rem;}
+.ac-body p{font-size:.7rem;color:var(--muted);}
+.ac-arr{color:var(--muted);font-size:.9rem;flex-shrink:0;}
+.new-tag{background:var(--accent2);color:#fff;font-size:.55rem;font-weight:800;padding:.08rem .4rem;border-radius:50px;letter-spacing:.03em;}
+.hot-tag{background:var(--amber);color:#000;font-size:.55rem;font-weight:800;padding:.08rem .4rem;border-radius:50px;}
 
-/* ── HEADER ── */
-.page-header { margin-bottom: 1.5rem; }
-.page-header h1 { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.6rem; line-height: 1.2; }
-.page-header p { color: var(--tg-hint); font-size: .85rem; margin-top: .35rem; }
+/* CREDIT PILL */
+.credit-pill{background:var(--card);border:1px solid var(--border);border-radius:50px;padding:.35rem .8rem;display:flex;align-items:center;gap:.3rem;font-weight:700;font-size:.78rem;cursor:pointer;}
+.cp-dot{width:7px;height:7px;border-radius:50%;background:var(--amber);}
 
-/* ── CARDS ── */
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 1.25rem;
-  margin-bottom: 1rem;
+/* BUTTONS */
+.btn{display:flex;align-items:center;justify-content:center;gap:.45rem;padding:.75rem;border-radius:50px;border:none;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .2s;width:100%;}
+.btn-grad{background:var(--grad);color:#fff;box-shadow:0 4px 20px rgba(91,123,255,.25);}
+.btn-grad:active{transform:scale(.98);opacity:.9;}
+.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text);}
+.btn-outline:active{background:var(--card2);}
+.btn-sm{padding:.45rem 1rem;font-size:.75rem;width:auto;border-radius:50px;}
+.btn-green{background:var(--green);color:#000;}
+.btn-teal{background:var(--teal);color:#000;}
+
+/* FORM */
+.form-field{margin-bottom:.85rem;}
+.form-field label{display:block;font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.06em;}
+.form-field input,.form-field textarea,.form-field select{
+  width:100%;background:var(--card2);border:1.5px solid var(--border);
+  border-radius:11px;padding:.7rem .9rem;color:var(--text);
+  font-family:'Space Grotesk',sans-serif;font-size:.85rem;
+  outline:none;transition:border-color .2s;resize:none;
 }
-.card-title { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1rem; margin-bottom: .85rem; display: flex; align-items: center; gap: .5rem; }
+.form-field input:focus,.form-field textarea:focus,.form-field select:focus{border-color:var(--accent);}
+select option{background:var(--bg2);}
 
-/* ── HERO CARD ── */
-.hero-card {
-  background: linear-gradient(135deg, #1a1a3e, #2d1b69, #1e3a8a);
-  border-radius: var(--radius);
-  padding: 1.75rem 1.5rem;
-  margin-bottom: 1.25rem;
-  position: relative; overflow: hidden;
-}
-.hero-card::before {
-  content: ''; position: absolute;
-  width: 200px; height: 200px; background: rgba(108,142,255,.15);
-  border-radius: 50%; top: -60px; right: -60px;
-}
-.hero-card h2 { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.4rem; margin-bottom: .4rem; position: relative; }
-.hero-card p { font-size: .82rem; opacity: .8; margin-bottom: 1.25rem; position: relative; line-height: 1.6; }
+/* WIZARD */
+.wiz-steps{display:flex;gap:.35rem;margin-bottom:1.1rem;}
+.wstep{flex:1;height:3px;border-radius:10px;background:var(--border);transition:all .3s;}
+.wstep.done{background:var(--green);}
+.wstep.active{background:var(--accent);}
 
-/* ── BUTTONS ── */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
-  padding: .75rem 1.5rem; border-radius: 50px; border: none;
-  font-family: 'Sora', sans-serif; font-weight: 700; font-size: .9rem;
-  cursor: pointer; transition: all .2s; width: 100%;
-}
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:active { transform: scale(.97); background: #5a7aee; }
-.btn-secondary { background: rgba(255,255,255,.08); color: var(--tg-text); border: 1.5px solid var(--border); }
-.btn-secondary:active { transform: scale(.97); background: rgba(255,255,255,.14); }
-.btn-green { background: var(--green); color: #fff; }
-.btn-sm { padding: .5rem 1.1rem; font-size: .8rem; width: auto; }
-.btn-icon { width: 44px; height: 44px; padding: 0; border-radius: 12px; }
+/* CHOICE GRID */
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.choice-btn{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:.75rem;text-align:center;cursor:pointer;transition:all .18s;}
+.choice-btn:active{transform:scale(.97);}
+.choice-btn.sel{border-color:var(--accent);background:rgba(91,123,255,.08);}
+.cb-icon{font-size:1.3rem;margin-bottom:.25rem;}
+.cb-name{font-weight:700;font-size:.78rem;}
+.cb-desc{font-size:.65rem;color:var(--muted);margin-top:.08rem;}
 
-/* ── STYLE GRID ── */
-.style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-.style-card {
-  background: var(--card); border: 2px solid var(--border);
-  border-radius: 14px; padding: 1rem; cursor: pointer; transition: all .2s; text-align: center;
-}
-.style-card:active { transform: scale(.97); }
-.style-card.selected { border-color: var(--accent); background: rgba(108,142,255,.12); }
-.style-card .sc-icon { font-size: 1.75rem; margin-bottom: .4rem; }
-.style-card .sc-name { font-weight: 700; font-size: .85rem; }
-.style-card .sc-desc { font-size: .72rem; color: var(--tg-hint); margin-top: .15rem; }
+/* COUNT PILLS */
+.count-pills{display:flex;flex-wrap:wrap;gap:.45rem;}
+.cpill{background:var(--card);border:2px solid var(--border);border-radius:50px;padding:.35rem .85rem;font-weight:700;font-size:.82rem;cursor:pointer;transition:all .2s;font-family:'Sora',sans-serif;}
+.cpill.sel{border-color:var(--accent);color:var(--accent);background:rgba(91,123,255,.08);}
 
-/* ── SLIDE COUNT ── */
-.count-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
-.count-btn {
-  background: var(--card); border: 2px solid var(--border);
-  border-radius: 12px; padding: .65rem .4rem; text-align: center;
-  cursor: pointer; transition: all .2s; font-weight: 800;
-  font-family: 'Nunito', sans-serif; font-size: .95rem;
-}
-.count-btn.selected { border-color: var(--accent); background: rgba(108,142,255,.12); color: var(--accent); }
-.count-btn:active { transform: scale(.95); }
+/* PROGRESS */
+.gen-wrap{padding:2.5rem 1.1rem;text-align:center;}
+.gen-anim{font-size:2.8rem;animation:spin 1.8s linear infinite;display:inline-block;margin-bottom:1rem;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.pbar-bg{background:var(--card2);border-radius:10px;height:6px;margin:1rem 0 .5rem;overflow:hidden;}
+.pbar{background:var(--grad);height:6px;border-radius:10px;transition:width .5s cubic-bezier(.4,0,.2,1);}
 
-/* ── LANG PILLS ── */
-.lang-pills { display: flex; gap: .5rem; }
-.lang-pill {
-  flex: 1; background: var(--card); border: 2px solid var(--border);
-  border-radius: 50px; padding: .55rem; text-align: center;
-  cursor: pointer; transition: all .2s; font-weight: 700; font-size: .85rem;
-}
-.lang-pill.selected { border-color: var(--accent); background: rgba(108,142,255,.12); color: var(--accent); }
+/* QUIZ */
+.quiz-header{padding:1rem 1.1rem .6rem;border-bottom:1px solid var(--border);}
+.qh-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:.55rem;}
+.qh-counter{font-weight:700;font-size:.78rem;color:var(--muted);}
+.qh-timer{background:var(--card2);border:1px solid var(--border);padding:.28rem .7rem;border-radius:50px;font-weight:700;font-size:.78rem;font-family:'JetBrains Mono',monospace;}
+.qh-timer.danger{background:rgba(244,63,94,.1);border-color:var(--red);color:var(--red);animation:pulse .7s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.04);}}
+.qpbar-bg{background:var(--card2);height:4px;border-radius:10px;overflow:hidden;}
+.qpbar{background:var(--grad);height:4px;border-radius:10px;transition:width .4s;}
+.quiz-body{padding:1.1rem 1.1rem;}
+.q-num{font-size:.65rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.4rem;}
+.q-text{font-family:'Sora',sans-serif;font-weight:700;font-size:1rem;line-height:1.5;margin-bottom:1.1rem;}
+.options{display:flex;flex-direction:column;gap:.5rem;}
+.opt{display:flex;align-items:center;gap:.7rem;background:var(--card);border:2px solid var(--border);border-radius:12px;padding:.8rem .9rem;cursor:pointer;transition:all .18s;}
+.opt:active{transform:scale(.99);}
+.opt.sel{border-color:var(--accent);background:rgba(91,123,255,.08);}
+.opt.correct{border-color:var(--green);background:rgba(0,224,138,.06);}
+.opt.wrong{border-color:var(--red);background:rgba(244,63,94,.06);}
+.opt-letter{width:28px;height:28px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.72rem;flex-shrink:0;transition:all .2s;}
+.opt.sel .opt-letter{background:var(--accent);color:#fff;}
+.opt.correct .opt-letter{background:var(--green);color:#000;}
+.opt.wrong .opt-letter{background:var(--red);color:#fff;}
+.quiz-nav{display:flex;justify-content:space-between;align-items:center;padding:.9rem 1.1rem;border-top:1px solid var(--border);gap:.5rem;position:sticky;bottom:0;background:var(--bg);}
+.qdots{display:flex;gap:.28rem;flex:1;justify-content:center;flex-wrap:wrap;}
+.qdot{width:8px;height:8px;border-radius:50%;background:var(--border);cursor:pointer;transition:all .2s;}
+.qdot.ans{background:var(--accent);}
+.qdot.cur{background:var(--amber);transform:scale(1.3);}
 
-/* ── FORM ── */
-.form-field { margin-bottom: 1rem; }
-.form-field label { display: block; font-size: .8rem; font-weight: 700; color: var(--tg-hint); margin-bottom: .45rem; text-transform: uppercase; letter-spacing: .05em; }
-.form-field input, .form-field textarea {
-  width: 100%; background: var(--card); border: 1.5px solid var(--border);
-  border-radius: 12px; padding: .8rem 1rem; color: var(--tg-text);
-  font-family: 'Sora', sans-serif; font-size: .9rem; outline: none;
-  transition: border-color .2s; resize: none;
-}
-.form-field input:focus, .form-field textarea:focus { border-color: var(--accent); }
+/* RESULT */
+.result-hero{background:linear-gradient(135deg,rgba(91,123,255,.08),rgba(139,92,246,.08));border:1px solid rgba(91,123,255,.18);border-radius:18px;padding:1.5rem;text-align:center;margin:1.1rem;}
+.rh-ring{width:100px;height:100px;border-radius:50%;border:4px solid;margin:0 auto .85rem;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.rh-pct{font-family:'Sora',sans-serif;font-size:2rem;font-weight:800;line-height:1;}
+.rh-sub{font-size:.65rem;font-weight:600;color:var(--muted);}
+.res-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin:1rem 1.1rem;}
+.rs{background:var(--card);border-radius:11px;padding:.75rem;text-align:center;}
+.rs .rv{font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:800;}
+.rs .rl{font-size:.62rem;color:var(--muted);font-weight:600;margin-top:.08rem;}
 
-/* ── STEPS ── */
-.steps { display: flex; gap: .5rem; margin-bottom: 1.5rem; }
-.step {
-  flex: 1; height: 4px; border-radius: 10px; background: var(--border); transition: all .3s;
-}
-.step.active { background: var(--accent); }
-.step.done { background: var(--green); }
-.step-label { display: flex; justify-content: space-between; font-size: .72rem; color: var(--tg-hint); font-weight: 600; margin-top: .4rem; margin-bottom: 1.25rem; }
+/* STAT GRID */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:.85rem;text-align:center;}
+.stat-box .sv{font-family:'Sora',sans-serif;font-size:1.5rem;font-weight:800;color:var(--accent);}
+.stat-box .sl{font-size:.63rem;font-weight:700;color:var(--muted);margin-top:.12rem;text-transform:uppercase;letter-spacing:.05em;}
 
-/* ── PROGRESS GEN ── */
-.gen-progress { text-align: center; padding: 2.5rem 1rem; }
-.gen-spinner { font-size: 3.5rem; animation: spin 2s linear infinite; display: inline-block; margin-bottom: 1rem; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.gen-bar-bg { background: var(--border); border-radius: 10px; height: 8px; margin: 1.25rem 0 .5rem; overflow: hidden; }
-.gen-bar { background: linear-gradient(90deg, var(--accent), var(--accent2)); height: 8px; border-radius: 10px; transition: width .5s ease; }
-.gen-step-text { font-size: .82rem; color: var(--tg-hint); }
+/* CARD */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1rem;margin-bottom:.65rem;}
+.card-title{font-family:'Sora',sans-serif;font-weight:700;font-size:.85rem;margin-bottom:.75rem;display:flex;align-items:center;gap:.45rem;}
 
-/* ── RESULT ── */
-.result-hero { text-align: center; padding: 1.5rem; background: linear-gradient(135deg,rgba(108,142,255,.1),rgba(167,139,250,.1)); border-radius: var(--radius); margin-bottom: 1rem; }
-.result-icon { font-size: 3.5rem; margin-bottom: .75rem; }
-.result-score { font-family: 'Nunito', sans-serif; font-size: 2.5rem; font-weight: 900; color: var(--accent); }
-.dl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-.dl-btn {
-  background: var(--card); border: 1.5px solid var(--border); border-radius: 14px;
-  padding: 1rem; text-align: center; cursor: pointer; transition: all .2s;
-}
-.dl-btn:active { transform: scale(.97); border-color: var(--accent); }
-.dl-btn .db-icon { font-size: 1.75rem; margin-bottom: .4rem; }
-.dl-btn .db-name { font-size: .8rem; font-weight: 700; }
-.dl-btn .db-sub { font-size: .7rem; color: var(--tg-hint); margin-top: .15rem; }
+/* CREDIT PACKAGES */
+.pkg-list{display:flex;flex-direction:column;gap:.5rem;}
+.pkg-card{background:var(--card);border:2px solid var(--border);border-radius:var(--r);padding:.9rem 1rem;display:flex;align-items:center;gap:.75rem;cursor:pointer;transition:all .2s;position:relative;}
+.pkg-card.pop{border-color:var(--amber);}
+.pkg-hot{position:absolute;top:-8px;right:.9rem;background:var(--amber);color:#000;font-size:.58rem;font-weight:800;padding:.12rem .5rem;border-radius:50px;}
+.pkg-icon{width:42px;height:42px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+.pkg-body{flex:1;}
+.pkg-name{font-weight:700;font-size:.82rem;margin-bottom:.12rem;}
+.pkg-price{font-family:'Sora',sans-serif;font-size:1.15rem;font-weight:800;color:var(--accent);}
+.pkg-sub{font-size:.68rem;color:var(--muted);}
 
-/* ── PLANS ── */
-.plan-cards { display: flex; flex-direction: column; gap: .75rem; }
-.plan-card {
-  background: var(--card); border: 2px solid var(--border);
-  border-radius: var(--radius); padding: 1.25rem; cursor: pointer;
-  transition: all .2s; position: relative;
-}
-.plan-card:active { transform: scale(.99); }
-.plan-card.popular { border-color: var(--accent); }
-.plan-card.selected { border-color: var(--green); background: rgba(52,211,153,.07); }
-.plan-hot { position: absolute; top: -10px; right: 1rem; background: var(--amber); color: #000; font-size: .65rem; font-weight: 800; padding: .2rem .65rem; border-radius: 50px; }
-.plan-name { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.1rem; }
-.plan-price { font-family: 'Nunito', sans-serif; font-size: 1.6rem; font-weight: 900; color: var(--accent); margin: .25rem 0; }
-.plan-price span { font-size: .8rem; color: var(--tg-hint); font-weight: 400; }
-.plan-feats { display: flex; flex-direction: column; gap: .3rem; margin-top: .65rem; }
-.plan-feat { font-size: .78rem; color: var(--tg-hint); display: flex; align-items: center; gap: .4rem; }
-.plan-feat::before { content: "✓"; color: var(--green); font-weight: 800; }
+/* PLAN CARDS */
+.plan-cards{display:flex;flex-direction:column;gap:.6rem;margin-bottom:.9rem;}
+.plan-card{background:var(--card);border:2px solid var(--border);border-radius:var(--r);padding:1rem;cursor:pointer;transition:all .2s;position:relative;}
+.plan-card.pop{border-color:var(--accent);}
+.plan-card.sel{border-color:var(--green);background:rgba(0,224,138,.04);}
+.pc-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.pc-name{font-family:'Sora',sans-serif;font-weight:800;font-size:.95rem;}
+.pc-price{font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:800;color:var(--accent);}
+.pc-sub{font-size:.65rem;color:var(--muted);}
+.pc-feats{display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.55rem;}
+.pc-feat{background:rgba(255,255,255,.05);border-radius:50px;padding:.18rem .55rem;font-size:.65rem;font-weight:600;}
 
-/* ── PAY METHODS ── */
-.pay-methods { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .6rem; margin-bottom: 1.25rem; }
-.pay-method {
-  background: var(--card); border: 2px solid var(--border); border-radius: 12px;
-  padding: .75rem .5rem; text-align: center; cursor: pointer; transition: all .2s;
-}
-.pay-method.active { border-color: var(--accent); }
-.pay-method .pm-icon { font-size: 1.4rem; }
-.pay-method .pm-name { font-size: .7rem; font-weight: 700; margin-top: .2rem; }
+/* PROFILE */
+.prof-card{background:linear-gradient(135deg,#111a50,#0e0a2e);border:1px solid rgba(91,123,255,.18);border-radius:18px;padding:1.35rem;margin:0 1.1rem .85rem;position:relative;overflow:hidden;}
+.prof-card::before{content:'';position:absolute;width:180px;height:180px;background:rgba(91,123,255,.08);border-radius:50%;top:-50px;right:-50px;}
+.prof-av{width:54px;height:54px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:.75rem;}
+.prof-name{font-family:'Sora',sans-serif;font-weight:800;font-size:1.1rem;}
+.prof-plan{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .65rem;border-radius:50px;font-size:.68rem;font-weight:700;margin-top:.3rem;}
+.plan-free{background:rgba(255,255,255,.07);color:var(--muted);}
+.plan-premium{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(239,68,68,.1));color:var(--amber);border:1px solid rgba(245,158,11,.25);}
 
-/* ── STAT CARDS ── */
-.stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; margin-bottom: 1rem; }
-.stat-box { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1rem; text-align: center; }
-.stat-box .sb-val { font-family: 'Nunito', sans-serif; font-size: 1.6rem; font-weight: 900; color: var(--accent); }
-.stat-box .sb-lbl { font-size: .72rem; color: var(--tg-hint); font-weight: 600; margin-top: .2rem; }
+/* REF BOX */
+.ref-box{background:rgba(91,123,255,.07);border:1.5px solid rgba(91,123,255,.18);border-radius:11px;padding:.9rem;font-family:'JetBrains Mono',monospace;font-size:.73rem;word-break:break-all;margin-bottom:.75rem;cursor:pointer;}
 
-/* ── TEMPLATES ── */
-.tmpl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-.tmpl-card {
-  background: var(--card); border: 1.5px solid var(--border); border-radius: 14px;
-  padding: 1.1rem; cursor: pointer; transition: all .2s;
-}
-.tmpl-card:active { transform: scale(.97); border-color: var(--accent); }
-.tmpl-icon { font-size: 1.75rem; margin-bottom: .5rem; }
-.tmpl-name { font-weight: 800; font-size: .88rem; margin-bottom: .2rem; }
-.tmpl-desc { font-size: .72rem; color: var(--tg-hint); }
-.tmpl-slides { font-size: .7rem; color: var(--accent); font-weight: 700; margin-top: .4rem; }
+/* PAY METHODS */
+.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.75rem 0;}
+.pay-m{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:.75rem;text-align:center;cursor:pointer;transition:all .2s;}
+.pay-m.sel{border-color:var(--accent);}
+.pay-m .pm-icon{font-size:1.3rem;margin-bottom:.2rem;}
+.pay-m .pm-name{font-size:.72rem;font-weight:700;}
 
-/* ── REFERRAL ── */
-.ref-link-box { background: rgba(108,142,255,.1); border: 1.5px solid rgba(108,142,255,.3); border-radius: 12px; padding: 1rem; font-family: 'JetBrains Mono', monospace; font-size: .78rem; word-break: break-all; margin-bottom: 1rem; }
-.ref-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: .6rem; margin-bottom: 1rem; }
-.ref-stat { background: var(--card); border-radius: 12px; padding: .85rem; text-align: center; }
-.ref-stat .rv { font-family: 'Nunito', sans-serif; font-size: 1.3rem; font-weight: 900; color: var(--green); }
-.ref-stat .rl { font-size: .68rem; color: var(--tg-hint); font-weight: 600; }
+/* TOAST */
+.toast-wrap{position:fixed;top:1rem;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:.35rem;pointer-events:none;}
+.toast{background:#161b28;border:1px solid var(--border);color:var(--text);padding:.6rem 1.1rem;border-radius:50px;font-size:.76rem;font-weight:600;white-space:nowrap;opacity:0;transform:translateY(-8px);transition:all .25s;}
+.toast.show{opacity:1;transform:translateY(0);}
 
-/* ── TOAST ── */
-.toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%) translateY(-80px); background: #1e2a3a; color: #fff; padding: .75rem 1.5rem; border-radius: 50px; font-size: .85rem; font-weight: 600; z-index: 999; transition: transform .3s ease; white-space: nowrap; border: 1px solid var(--border); }
-.toast.show { transform: translateX(-50%) translateY(0); }
+/* ═══════════════════════════════════
+   ARTICLE WRITER — SPECIAL STYLES
+═══════════════════════════════════ */
+.article-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem;}
+.at-card{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:.85rem .7rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+.at-card:active{transform:scale(.97);}
+.at-card.sel{border-color:var(--teal);background:rgba(20,184,166,.07);}
+.at-icon{font-size:1.5rem;margin-bottom:.3rem;}
+.at-name{font-weight:700;font-size:.78rem;}
+.at-desc{font-size:.62rem;color:var(--muted);margin-top:.06rem;}
 
-/* ── PROFILE ── */
-.prof-avatar { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg,var(--accent),var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; margin: 0 auto 1rem; border: 3px solid var(--border); }
-.prof-info { text-align: center; margin-bottom: 1.5rem; }
-.prof-name { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1.3rem; }
-.prof-plan { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .85rem; border-radius: 50px; font-size: .78rem; font-weight: 700; margin-top: .4rem; }
-.plan-free { background: rgba(255,255,255,.08); color: var(--tg-hint); }
-.plan-premium { background: linear-gradient(135deg,rgba(251,191,36,.2),rgba(245,158,11,.2)); color: var(--amber); border: 1px solid rgba(251,191,36,.3); }
+.tone-pills{display:flex;flex-wrap:wrap;gap:.4rem;}
+.tone-pill{background:var(--card);border:2px solid var(--border);border-radius:50px;padding:.3rem .75rem;font-weight:600;font-size:.73rem;cursor:pointer;transition:all .2s;}
+.tone-pill.sel{border-color:var(--teal);color:var(--teal);background:rgba(20,184,166,.08);}
 
-/* ── HISTORY ── */
-.hist-item { display: flex; align-items: center; gap: .85rem; padding: .85rem; background: var(--card); border-radius: 12px; margin-bottom: .6rem; border: 1px solid var(--border); }
-.hist-icon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
-.hist-info { flex: 1; min-width: 0; }
-.hist-info h4 { font-weight: 700; font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hist-info p { font-size: .72rem; color: var(--tg-hint); margin-top: .1rem; }
-.hist-score { font-family: 'Nunito', sans-serif; font-weight: 900; font-size: 1rem; color: var(--accent); }
+.length-pills{display:flex;gap:.4rem;flex-wrap:wrap;}
+.lpill{background:var(--card);border:2px solid var(--border);border-radius:50px;padding:.32rem .8rem;font-weight:600;font-size:.73rem;cursor:pointer;transition:all .2s;}
+.lpill.sel{border-color:var(--teal);color:var(--teal);background:rgba(20,184,166,.08);}
+
+/* ARTICLE RESULT */
+.article-result-wrap{padding:1rem 1.1rem;padding-bottom:100px;}
+.article-header-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;}
+.article-meta{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.85rem;}
+.article-meta span{background:rgba(20,184,166,.1);border:1px solid rgba(20,184,166,.2);color:var(--teal);border-radius:50px;padding:.18rem .6rem;font-size:.65rem;font-weight:700;}
+.article-title{font-family:'Sora',sans-serif;font-size:1.25rem;font-weight:800;line-height:1.35;letter-spacing:-.02em;margin-bottom:.65rem;}
+.article-divider{height:2px;background:linear-gradient(to right,var(--teal),transparent);margin:.65rem 0;border-radius:10px;}
+.article-body{font-size:.875rem;line-height:1.75;color:var(--text);}
+.article-body p{margin-bottom:1rem;}
+.article-body h2{font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;margin:1.25rem 0 .5rem;color:var(--text);}
+.article-body h3{font-family:'Sora',sans-serif;font-weight:700;font-size:.9rem;margin:1rem 0 .4rem;color:var(--accent);}
+.article-body ul{padding-left:1.2rem;margin-bottom:1rem;}
+.article-body li{margin-bottom:.4rem;}
+.article-body blockquote{border-left:3px solid var(--teal);padding:.6rem 1rem;background:rgba(20,184,166,.05);border-radius:0 10px 10px 0;margin:.85rem 0;font-style:italic;color:var(--muted);}
+.article-body strong{color:var(--text);font-weight:700;}
+
+.article-action-bar{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:1rem;}
+.word-count-badge{background:rgba(20,184,166,.1);border:1px solid rgba(20,184,166,.2);color:var(--teal);border-radius:8px;padding:.3rem .65rem;font-size:.68rem;font-weight:700;display:inline-flex;align-items:center;gap:.3rem;}
+
+/* AI ARTICLE GEN STEPS */
+.gen-steps-wrap{display:flex;flex-direction:column;gap:.5rem;margin:.85rem 0;}
+.gen-step{display:flex;align-items:center;gap:.65rem;padding:.65rem .8rem;background:var(--card);border:1px solid var(--border);border-radius:11px;transition:all .3s;}
+.gen-step.active{border-color:var(--accent);background:rgba(91,123,255,.06);}
+.gen-step.done{border-color:var(--green);background:rgba(0,224,138,.05);}
+.gs-icon{font-size:1rem;flex-shrink:0;width:24px;text-align:center;}
+.gs-text{font-size:.8rem;font-weight:600;color:var(--muted);transition:color .3s;}
+.gen-step.active .gs-text{color:var(--text);}
+.gen-step.done .gs-text{color:var(--green);}
+
+/* SUGGESTIONS CHIPS */
+.suggest-row{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.75rem;}
+.suggest-chip{background:var(--card2);border:1px solid var(--border);color:var(--muted);padding:.28rem .7rem;border-radius:50px;font-size:.7rem;font-weight:600;cursor:pointer;transition:all .15s;}
+.suggest-chip:active{background:var(--card);color:var(--text);}
+
+/* SECTION DIVIDERS */
+.sec-divider{height:1px;background:var(--border);margin:.25rem 1.1rem .75rem;}
 </style>
 </head>
 <body>
 
-<!-- ── HOME ── -->
+<!-- ═══ HOME ═══ -->
 <div class="page active" id="page-home">
-  <div class="hero-card">
-    <h2>🎨 AI Prezentatsiya</h2>
-    <p>Professional slaydlar yarating — mavzu bering, AI qolganini qiladi!</p>
-    <button class="btn btn-primary" onclick="showPage('create')">✨ Yaratishni boshlash</button>
-  </div>
-
-  <div class="card">
-    <div class="card-title">⚡ Tezkor yaratish</div>
-    <div class="tmpl-grid" id="quickTemplates"></div>
-  </div>
-
-  <div class="stat-row">
-    <div class="stat-box"><div class="sb-val" id="hStatPres">0</div><div class="sb-lbl">🎨 Prezentatsiya</div></div>
-    <div class="stat-box"><div class="sb-val" id="hStatSlides">0</div><div class="sb-lbl">📄 Jami slaydlar</div></div>
-  </div>
-
-  <div class="card" style="background:linear-gradient(135deg,rgba(252,191,36,.07),rgba(245,158,11,.07));border-color:rgba(251,191,36,.2);">
-    <div class="card-title">⭐ Premium afzalliklari</div>
-    <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.82rem;">
-      <div>✅ Cheksiz prezentatsiyalar</div>
-      <div>✅ AI yordamchi (cheksiz)</div>
-      <div>✅ PPTX + PDF + Rasmlar</div>
-      <div>✅ 8 ta professional shablon</div>
+  <div class="phead">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h1 id="helloText">⚡ QuizBot Pro</h1>
+        <p>Yarating, mashq qiling, ulashing.</p>
+      </div>
+      <div class="credit-pill" onclick="showPage('credits')">
+        <div class="cp-dot"></div>
+        <span id="creditCount">3</span> Kredit
+      </div>
     </div>
-    <button class="btn btn-secondary" style="margin-top:1rem;" onclick="showPage('premium')">👑 Premium olish →</button>
+  </div>
+
+  <div style="padding:0 1.1rem 0;">
+    <div class="hero-banner" id="heroBanner" onclick="bannerAction()">
+      <div class="hb-bg" id="heroBannerBg"></div>
+      <div class="hb-noise"></div>
+      <div class="hb-circle1"></div>
+      <div class="hb-circle2"></div>
+      <div class="hb-emoji" id="heroBannerEmoji">✍️</div>
+      <div class="hb-content">
+        <h2 id="bannerTitle">AI Maqola Yozuvchi</h2>
+        <p id="bannerDesc">Professional maqolalar yarating. 2 kredit.</p>
+        <div class="hb-btn" id="bannerBtn">Hozir boshlash →</div>
+      </div>
+    </div>
+    <div class="slider-dots" id="sliderDots"></div>
+  </div>
+
+  <div class="section">
+    <div class="sec-title">Boshlash uchun</div>
+    <div class="action-list">
+      <div class="action-card" onclick="showPage('article')">
+        <div class="ac-icon" style="background:rgba(20,184,166,.1);color:var(--teal);">✍️</div>
+        <div class="ac-body"><h3>AI Maqola Yozish <span class="hot-tag">HOT</span></h3><p>Professional maqolalar, bloglar, hisobotlar yarating.</p></div>
+        <div class="ac-arr">›</div>
+      </div>
+      <div class="action-card" onclick="showPage('pdf')">
+        <div class="ac-icon" style="background:rgba(91,123,255,.1);color:var(--accent);">📄</div>
+        <div class="ac-body"><h3>PDF yuklash</h3><p>Har qanday faylni testga aylantiring.</p></div>
+        <div class="ac-arr">›</div>
+      </div>
+      <div class="action-card" onclick="showPage('ai-test')">
+        <div class="ac-icon" style="background:rgba(139,92,246,.1);color:var(--purple);">🤖</div>
+        <div class="ac-body"><h3>AI Test Yaratish <span class="new-tag">NEW</span></h3><p>Istalgan mavzuda test yarating.</p></div>
+        <div class="ac-arr">›</div>
+      </div>
+      <div class="action-card" onclick="showPage('presentation')">
+        <div class="ac-icon" style="background:rgba(0,224,138,.08);color:var(--green);">🖥</div>
+        <div class="ac-body"><h3>AI Prezentatsiya <span class="new-tag">NEW</span></h3><p>Professional prezentatsiyalar yarating.</p></div>
+        <div class="ac-arr">›</div>
+      </div>
+      <div class="action-card" onclick="showPage('my-tests')">
+        <div class="ac-icon" style="background:rgba(245,158,11,.08);color:var(--amber);">📚</div>
+        <div class="ac-body"><h3>Testlarim</h3><p>Natijalarni ko'ring va ulashing.</p></div>
+        <div class="ac-arr">›</div>
+      </div>
+      <div class="action-card" onclick="showPage('wrongs')">
+        <div class="ac-icon" style="background:rgba(244,63,94,.08);color:var(--red);">❌</div>
+        <div class="ac-body"><h3>Noto'g'ri javoblar</h3><p>Xatolaringizni ko'rib chiqing.</p></div>
+        <div class="ac-arr">›</div>
+      </div>
+      <div class="action-card" onclick="showPage('group')">
+        <div class="ac-icon" style="background:rgba(168,85,247,.08);color:var(--purple);">👥</div>
+        <div class="ac-body"><h3>Guruh testi</h3><p>Do'stlaringiz bilan real vaqtda o'ynang!</p></div>
+        <div class="ac-arr">›</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-divider"></div>
+  <div class="section">
+    <div class="sec-title">O'sish va to'lovlar</div>
+    <div class="action-list">
+      <div class="action-card" onclick="showPage('premium')" style="background:linear-gradient(135deg,rgba(245,158,11,.06),rgba(239,68,68,.06));border-color:rgba(245,158,11,.15);">
+        <div class="ac-icon" style="background:rgba(245,158,11,.1);color:var(--amber);">👑</div>
+        <div class="ac-body"><h3>Premium sotib olish</h3><p>Cheksiz kredit va barcha funksiyalar</p></div>
+        <div class="ac-arr" style="color:var(--amber);">›</div>
+      </div>
+      <div class="action-card" onclick="showPage('referral')">
+        <div class="ac-icon" style="background:rgba(0,224,138,.08);color:var(--green);">🎁</div>
+        <div class="ac-body"><h3>Do'st taklif qiling</h3><p>Havolani ulashing va kredit oling</p></div>
+        <div class="ac-arr">›</div>
+      </div>
+    </div>
+  </div>
+  <div style="text-align:center;padding:.6rem 1.1rem .25rem;font-size:.7rem;color:var(--muted);">💡 Sifatli PDF fayllar mukammal savollar beradi.</div>
+</div>
+
+<!-- ═══ ARTICLE WRITER ═══ -->
+<div class="page" id="page-article">
+  <div class="phead">
+    <button class="back-btn" onclick="showPage('home')">← Orqaga</button>
+    <h1>✍️ AI Maqola Yozuvchi</h1>
+    <p>Professional maqolalar bir daqiqada</p>
+  </div>
+  <div class="section">
+    <div class="wiz-steps" id="artWizSteps">
+      <div class="wstep active" id="artws1"></div>
+      <div class="wstep" id="artws2"></div>
+      <div class="wstep" id="artws3"></div>
+    </div>
+
+    <!-- STEP 1: Topic & Type -->
+    <div id="artStep1">
+      <div class="form-field">
+        <label>📝 Maqola mavzusi</label>
+        <textarea id="artTopic" rows="2" placeholder="Masalan: Sun'iy intellektning kelajagi, Sog'lom turmush tarzi, O'zbekistonda startaplar..."></textarea>
+      </div>
+      <div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.4rem;">Tezkor mavzular</div>
+      <div class="suggest-row" id="artSuggestions"></div>
+
+      <div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.55rem;">📂 Maqola turi</div>
+      <div class="article-type-grid" id="articleTypeGrid"></div>
+      <button class="btn btn-grad" onclick="artNextStep(2)" style="margin-top:.5rem;">Davom →</button>
+    </div>
+
+    <!-- STEP 2: Style & Options -->
+    <div id="artStep2" style="display:none;">
+      <div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;">🎭 Yozuv uslubi</div>
+      <div class="tone-pills" id="tonePills"></div>
+
+      <div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:.85rem 0 .5rem;">📏 Maqola uzunligi</div>
+      <div class="length-pills" id="lengthPills"></div>
+
+      <div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:.85rem 0 .55rem;">🌐 Til</div>
+      <div class="choice-grid" style="grid-template-columns:1fr 1fr 1fr;" id="artLangGrid"></div>
+
+      <div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:.85rem 0 .5rem;">🔑 Kalit so'zlar (ixtiyoriy)</div>
+      <div class="form-field" style="margin:0;">
+        <input type="text" id="artKeywords" placeholder="Masalan: AI, texnologiya, kelajak"/>
+      </div>
+
+      <div style="display:flex;gap:.5rem;margin-top:1rem;">
+        <button class="btn btn-outline" onclick="artNextStep(1)" style="flex:1;">← Orqaga</button>
+        <button class="btn btn-grad" onclick="artNextStep(3)" style="flex:2;">Davom →</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: Confirm -->
+    <div id="artStep3" style="display:none;">
+      <div class="card" id="artConfirmCard"></div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.85rem;">⚡ 2 kredit sarflanadi · Taxminan 30 soniya</div>
+      <div style="display:flex;gap:.5rem;">
+        <button class="btn btn-outline" onclick="artNextStep(2)" style="flex:1;">← Orqaga</button>
+        <button class="btn btn-teal" onclick="startArticleGen()" style="flex:2;">✍️ Yozishni boshlash</button>
+      </div>
+    </div>
+
+    <!-- GENERATING -->
+    <div id="artGenProgress" style="display:none;">
+      <div class="gen-wrap" style="padding-top:1.5rem;">
+        <div class="gen-anim">✍️</div>
+        <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:.25rem;">AI maqola yozmoqda...</div>
+        <div style="font-size:.75rem;color:var(--muted);">Iltimos kuting, sifatli kontent tayyorlanmoqda</div>
+        <div class="pbar-bg"><div class="pbar" id="artPbar" style="width:0%"></div></div>
+      </div>
+      <div class="gen-steps-wrap" id="artGenSteps"></div>
+    </div>
   </div>
 </div>
 
-<!-- ── CREATE ── -->
-<div class="page" id="page-create">
-  <div class="page-header">
-    <h1>🎨 Yangi Prezentatsiya</h1>
-    <p>Quyidagi bosqichlarni bajaring</p>
+<!-- ═══ ARTICLE RESULT ═══ -->
+<div class="page" id="page-article-result">
+  <div style="padding:.75rem 1.1rem .5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">
+    <button class="back-btn" onclick="showPage('article')" style="margin:0;">← Yangi</button>
+    <div style="display:flex;gap:.4rem;">
+      <button class="btn btn-outline btn-sm" onclick="copyArticle()">📋 Nusxa</button>
+      <button class="btn btn-teal btn-sm" onclick="shareArticle()">📤 Ulash</button>
+    </div>
   </div>
+  <div class="article-result-wrap" id="articleResultWrap"></div>
+</div>
 
-  <!-- Steps -->
-  <div class="steps">
-    <div class="step active" id="step1"></div>
-    <div class="step" id="step2"></div>
-    <div class="step" id="step3"></div>
-    <div class="step" id="step4"></div>
+<!-- ═══ PDF UPLOAD ═══ -->
+<div class="page" id="page-pdf">
+  <div class="phead">
+    <button class="back-btn" onclick="showPage('home')">← Orqaga</button>
+    <h1>📄 PDF yuklash</h1>
+    <p>Faylingizni testga aylantiring</p>
   </div>
-  <div class="step-label">
-    <span>Mavzu</span><span>Slaydlar</span><span>Uslub</span><span>Til</span>
-  </div>
-
-  <!-- STEP 1: Topic -->
-  <div id="createStep1">
+  <div class="section">
     <div class="form-field">
-      <label>📝 Mavzuni kiriting</label>
-      <textarea id="topicInput" rows="3" placeholder="Misol: Sun'iy intellekt va kelajak, Marketing strategiyasi 2025, Python dasturlash asoslari..."></textarea>
+      <label>Fayl nomi (ixtiyoriy)</label>
+      <input type="text" id="pdfName" placeholder="Masalan: Tarix darslik 5-bob"/>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.25rem;" id="topicSuggestions"></div>
-    <button class="btn btn-primary" onclick="goStep(2)">Davom etish →</button>
-  </div>
-
-  <!-- STEP 2: Slide count -->
-  <div id="createStep2" style="display:none;">
-    <div class="card-title" style="margin-bottom:1rem;">📄 Nechta slayd?</div>
-    <div class="count-grid" id="countGrid"></div>
-    <div style="display:flex;gap:.6rem;margin-top:1.25rem;">
-      <button class="btn btn-secondary" onclick="goStep(1)" style="flex:1;">← Orqaga</button>
-      <button class="btn btn-primary" onclick="goStep(3)" style="flex:2;">Davom →</button>
+    <div onclick="triggerPdfUpload()" id="uploadZone" style="background:var(--card2);border:2px dashed var(--border);border-radius:18px;padding:2rem 1rem;text-align:center;cursor:pointer;margin-bottom:.85rem;">
+      <div style="font-size:2.2rem;margin-bottom:.5rem;">📤</div>
+      <div style="font-weight:700;margin-bottom:.25rem;font-size:.9rem;">PDF faylni tanlang</div>
+      <div style="font-size:.73rem;color:var(--muted);">yoki bu yerga sudrab tashlang</div>
+      <div style="font-size:.68rem;color:var(--muted);margin-top:.4rem;">Maks. 20 MB · PDF format</div>
     </div>
-  </div>
-
-  <!-- STEP 3: Style -->
-  <div id="createStep3" style="display:none;">
-    <div class="card-title" style="margin-bottom:1rem;">🎨 Dizayn uslubi</div>
-    <div class="style-grid" id="styleGrid"></div>
-    <div style="display:flex;gap:.6rem;margin-top:1.25rem;">
-      <button class="btn btn-secondary" onclick="goStep(2)" style="flex:1;">← Orqaga</button>
-      <button class="btn btn-primary" onclick="goStep(4)" style="flex:2;">Davom →</button>
-    </div>
-  </div>
-
-  <!-- STEP 4: Language -->
-  <div id="createStep4" style="display:none;">
-    <div class="card-title" style="margin-bottom:1rem;">🌐 Prezentatsiya tili</div>
-    <div class="lang-pills" id="langPills"></div>
-
-    <!-- Confirm -->
-    <div class="card" style="margin-top:1.25rem;" id="confirmCard">
-      <div class="card-title">✅ Tasdiqlash</div>
-      <div style="display:flex;flex-direction:column;gap:.5rem;font-size:.85rem;" id="confirmDetails"></div>
-    </div>
-    <div style="display:flex;gap:.6rem;margin-top:1rem;">
-      <button class="btn btn-secondary" onclick="goStep(3)" style="flex:1;">← Orqaga</button>
-      <button class="btn btn-primary" onclick="startGeneration()" style="flex:2;">🚀 Yaratish</button>
-    </div>
-  </div>
-
-  <!-- GENERATING -->
-  <div id="genProgress" style="display:none;">
-    <div class="gen-progress">
-      <div class="gen-spinner">⚙️</div>
-      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:1.3rem;" id="genTitle">AI ishlamoqda...</div>
-      <div class="gen-bar-bg"><div class="gen-bar" id="genBar" style="width:0%"></div></div>
-      <div class="gen-step-text" id="genStepText">Boshlanyapti...</div>
-      <div style="font-size:.78rem;color:var(--tg-hint);margin-top:.5rem;" id="genPercent">0%</div>
-    </div>
-  </div>
-
-  <!-- RESULT -->
-  <div id="genResult" style="display:none;">
-    <div class="result-hero">
-      <div class="result-icon">🎉</div>
-      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:1.3rem;margin-bottom:.25rem;">Tayyor!</div>
-      <div style="font-size:.85rem;color:var(--tg-hint);" id="resultMeta"></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">📥 Yuklab olish</div>
-      <div class="dl-grid">
-        <div class="dl-btn" onclick="downloadFormat('pptx')">
-          <div class="db-icon">📊</div>
-          <div class="db-name">PowerPoint</div>
-          <div class="db-sub">.pptx format</div>
-        </div>
-        <div class="dl-btn" onclick="downloadFormat('pdf')">
-          <div class="db-icon">📄</div>
-          <div class="db-name">PDF</div>
-          <div class="db-sub">.pdf format</div>
-        </div>
-        <div class="dl-btn" onclick="downloadFormat('images')">
-          <div class="db-icon">🖼</div>
-          <div class="db-name">Rasmlar</div>
-          <div class="db-sub">.zip (PNG)</div>
-        </div>
-        <div class="dl-btn" onclick="downloadFormat('google')">
-          <div class="db-icon">🌐</div>
-          <div class="db-name">Google Slides</div>
-          <div class="db-sub">Online</div>
-        </div>
+    <input type="file" id="pdfInput" accept=".pdf" style="display:none" onchange="handlePdfSelect(this)"/>
+    <div id="pdfFileInfo" style="display:none;" class="card">
+      <div style="display:flex;align-items:center;gap:.65rem;">
+        <div style="font-size:1.8rem;">📄</div>
+        <div style="flex:1;"><div style="font-weight:700;font-size:.85rem;" id="pdfFileName">file.pdf</div><div style="font-size:.72rem;color:var(--muted);" id="pdfFileSize">0 KB</div></div>
+        <button onclick="clearPdf()" style="background:rgba(244,63,94,.1);border:none;color:var(--red);padding:.28rem .6rem;border-radius:50px;font-size:.72rem;font-weight:700;cursor:pointer;">✕</button>
       </div>
     </div>
-
-    <div style="display:flex;flex-direction:column;gap:.6rem;">
-      <button class="btn btn-secondary" onclick="resetCreate()">🔄 Yangi yaratish</button>
-      <button class="btn btn-secondary" onclick="showPage('home')">🏠 Bosh sahifa</button>
+    <div style="margin:.75rem 0;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.18);border-radius:11px;padding:.75rem;font-size:.75rem;">
+      <strong>⚡ 1 kredit sarflanadi</strong> — sizda <span id="pdfCreditShow">3</span> ta kredit bor
+    </div>
+    <button class="btn btn-grad" onclick="uploadPdf()">🚀 Testga aylantirish</button>
+  </div>
+  <div id="pdfProcessing" style="display:none;" class="section">
+    <div class="gen-wrap">
+      <div class="gen-anim">⚙️</div>
+      <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:.3rem;">PDF qayta ishlanmoqda...</div>
+      <div class="pbar-bg"><div class="pbar" id="pdfPbar" style="width:0%"></div></div>
+      <div style="font-size:.76rem;color:var(--muted);" id="pdfPbarText">Boshlanyapti...</div>
     </div>
   </div>
 </div>
 
-<!-- ── TEMPLATES ── -->
-<div class="page" id="page-templates">
-  <div class="page-header">
-    <h1>📋 Shablonlar</h1>
-    <p>Tayyor dizaynlar — tez va professional</p>
+<!-- ═══ AI TEST ═══ -->
+<div class="page" id="page-ai-test">
+  <div class="phead">
+    <button class="back-btn" onclick="showPage('home')">← Orqaga</button>
+    <h1>🤖 AI Test Yaratish</h1>
   </div>
-  <div class="tmpl-grid" id="allTemplates"></div>
+  <div class="section">
+    <div class="wiz-steps" id="aiWizSteps">
+      <div class="wstep active" id="aws1"></div>
+      <div class="wstep" id="aws2"></div>
+      <div class="wstep" id="aws3"></div>
+    </div>
+    <div id="aiStep1">
+      <div class="form-field">
+        <label>📝 Mavzu</label>
+        <textarea id="aiTopic" rows="3" placeholder="Masalan: Python dasturlash, Ingliz tili grammatikasi, O'zbekiston tarixi..."></textarea>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.85rem;" id="topicSuggestions"></div>
+      <button class="btn btn-grad" onclick="aiNextStep(2)">Davom →</button>
+    </div>
+    <div id="aiStep2" style="display:none;">
+      <div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:.5rem;">📊 Savollar soni</div>
+      <div class="count-pills" id="aiCountPills"></div>
+      <div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin:.75rem 0 .5rem;">🎯 Qiyinlik</div>
+      <div class="choice-grid" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="choice-btn sel" onclick="selDiff('easy',this)"><div class="cb-icon">😊</div><div class="cb-name">Oson</div></div>
+        <div class="choice-btn" onclick="selDiff('medium',this)"><div class="cb-icon">😐</div><div class="cb-name">O'rta</div></div>
+        <div class="choice-btn" onclick="selDiff('hard',this)"><div class="cb-icon">🔥</div><div class="cb-name">Qiyin</div></div>
+      </div>
+      <div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;margin:.75rem 0 .5rem;">🌐 Til</div>
+      <div class="choice-grid" style="grid-template-columns:1fr 1fr 1fr;">
+        <div class="choice-btn sel" onclick="selLang('uz',this)"><div class="cb-icon">🇺🇿</div><div class="cb-name">O'zbek</div></div>
+        <div class="choice-btn" onclick="selLang('ru',this)"><div class="cb-icon">🇷🇺</div><div class="cb-name">Rus</div></div>
+        <div class="choice-btn" onclick="selLang('en',this)"><div class="cb-icon">🇬🇧</div><div class="cb-name">Ingliz</div></div>
+      </div>
+      <div style="display:flex;gap:.5rem;margin-top:.85rem;">
+        <button class="btn btn-outline" onclick="aiNextStep(1)" style="flex:1;">← Orqaga</button>
+        <button class="btn btn-grad" onclick="aiNextStep(3)" style="flex:2;">Davom →</button>
+      </div>
+    </div>
+    <div id="aiStep3" style="display:none;">
+      <div class="card" id="aiConfirmCard"></div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.85rem;">⚡ 2 kredit sarflanadi</div>
+      <div style="display:flex;gap:.5rem;">
+        <button class="btn btn-outline" onclick="aiNextStep(2)" style="flex:1;">← Orqaga</button>
+        <button class="btn btn-grad" onclick="startAiGen()" style="flex:2;">🚀 Yaratish</button>
+      </div>
+    </div>
+    <div id="aiGenProgress" style="display:none;">
+      <div class="gen-wrap">
+        <div class="gen-anim">🤖</div>
+        <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:.25rem;">AI ishlamoqda...</div>
+        <div class="pbar-bg"><div class="pbar" id="aiPbar" style="width:0%"></div></div>
+        <div style="font-size:.76rem;color:var(--muted);margin-top:.35rem;" id="aiPbarText">Mavzu tahlil qilinmoqda...</div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!-- ── PREMIUM ── -->
+<!-- ═══ QUIZ ═══ -->
+<div class="page" id="page-quiz" style="padding-bottom:0;">
+  <div class="quiz-header">
+    <div class="qh-top">
+      <div class="qh-counter" id="qCounter">1 / 10</div>
+      <div class="qh-timer" id="qTimer">⏱ 20:00</div>
+    </div>
+    <div class="qpbar-bg"><div class="qpbar" id="qPbar" style="width:0%"></div></div>
+  </div>
+  <div class="quiz-body" id="quizBody">
+    <div class="q-num" id="qNum">SAVOL 1</div>
+    <div class="q-text" id="qText"></div>
+    <div class="options" id="qOptions"></div>
+  </div>
+  <div class="quiz-nav">
+    <button onclick="quizPrev()" class="btn btn-outline btn-sm" style="width:auto;">←</button>
+    <div class="qdots" id="qDots"></div>
+    <button onclick="quizNext()" class="btn btn-grad btn-sm" id="qNextBtn" style="width:auto;">→</button>
+  </div>
+</div>
+
+<!-- ═══ RESULT ═══ -->
+<div class="page" id="page-result">
+  <div class="result-hero" id="resultHero"></div>
+  <div class="res-stats" id="resStats"></div>
+  <div class="section">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.5rem;">
+      <button class="btn btn-grad" onclick="retryQuiz()">🔄 Qayta</button>
+      <button class="btn btn-outline" onclick="showPage('home')">🏠 Menyu</button>
+    </div>
+    <button class="btn btn-outline" onclick="showPage('group')">📤 Guruhga ulashish</button>
+  </div>
+</div>
+
+<!-- ═══ MY TESTS ═══ -->
+<div class="page" id="page-my-tests">
+  <div class="phead">
+    <button class="back-btn" onclick="showPage('home')">← Orqaga</button>
+    <h1>📚 Testlarim</h1>
+  </div>
+  <div class="section" id="myTestsList">
+    <div style="text-align:center;padding:2rem;color:var(--muted);font-size:.85rem;">
+      Hali test yaratmadingiz.<br/>
+      <button class="btn btn-grad" style="margin-top:.85rem;width:auto;padding:.55rem 1.4rem;" onclick="showPage('pdf')">📄 PDF yuklash</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ WRONGS ═══ -->
+<div class="page" id="page-wrongs">
+  <div class="phead">
+    <button class="back-btn" onclick="showPage('home')">← Orqaga</button>
+    <h1>❌ Noto'g'ri javoblar</h1>
+  </div>
+  <div class="section" id="wrongsList">
+    <div style="text-align:center;padding:2rem;color:var(--muted);">Hali noto'g'ri javob yo'q! Zo'r! 🎉</div>
+  </div>
+</div>
+
+<!-- ═══ GROUP TEST ═══ -->
+<div class="page" id="page-group">
+  <div class="phead">
+    <button class="back-btn" onclick="showPage('home')">← Orqaga</button>
+    <h1>👥 Guruh testi</h1>
+    <p>Do'stlar bilan real vaqtda raqobat</p>
+  </div>
+  <div class="section">
+    <div class="card" style="background:linear-gradient(135deg,rgba(91,123,255,.08),rgba(139,92,246,.08));border-color:rgba(91,123,255,.18);text-align:center;padding:1.35rem;">
+      <div style="font-size:1.8rem;margin-bottom:.4rem;">🏆</div>
+      <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1rem;margin-bottom:.25rem;">Guruh Testi</div>
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.85rem;">Sessiya yarating va do'stlaringizni taklif qiling</div>
+      <button class="btn btn-grad" onclick="createSession()">➕ Sessiya yaratish</button>
+    </div>
+    <div style="text-align:center;margin:.75rem 0;font-size:.75rem;color:var(--muted);">yoki</div>
+    <div class="form-field">
+      <label>🔑 Sessiya kodi</label>
+      <input type="text" id="sessionCode" placeholder="QUIZ1234" style="text-transform:uppercase;font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.1em;font-size:.95rem;text-align:center;"/>
+    </div>
+    <button class="btn btn-outline" onclick="joinSession()">🔗 Sessiyaga qo'shilish</button>
+  </div>
+  <div class="section">
+    <div class="sec-title">🏆 Liderlar jadvali</div>
+    <div id="leaderboard"></div>
+  </div>
+</div>
+
+<!-- ═══ CREDITS ═══ -->
+<div class="page" id="page-credits">
+  <div class="phead">
+    <button class="back-btn" onclick="showPage('home')">← Orqaga</button>
+    <h1>⚡ Kreditlar</h1>
+    <div style="display:flex;align-items:baseline;gap:.4rem;margin-top:.25rem;">
+      <span style="font-family:'Sora',sans-serif;font-size:1.9rem;font-weight:800;color:var(--amber);" id="creditsNum">3</span>
+      <span style="color:var(--muted);font-size:.8rem;">ta kredit mavjud</span>
+    </div>
+  </div>
+  <div class="section">
+    <div style="background:var(--card);border-radius:12px;padding:.8rem .9rem;margin-bottom:.85rem;font-size:.78rem;border:1px solid var(--border);">
+      <div style="font-weight:700;margin-bottom:.45rem;">Kredit sarfi:</div>
+      <div style="display:flex;justify-content:space-between;padding:.28rem 0;border-bottom:1px solid var(--border);">📄 PDF yuklash<span style="color:var(--accent);font-weight:700;">1 kredit</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.28rem 0;border-bottom:1px solid var(--border);">🤖 AI test yaratish<span style="color:var(--accent);font-weight:700;">2 kredit</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.28rem 0;border-bottom:1px solid var(--border);">✍️ AI Maqola yozish<span style="color:var(--teal);font-weight:700;">2 kredit</span></div>
+      <div style="display:flex;justify-content:space-between;padding:.28rem 0;">🖥 AI Prezentatsiya<span style="color:var(--accent);font-weight:700;">3 kredit</span></div>
+    </div>
+    <div class="sec-title">Kredit sotib olish</div>
+    <div class="pkg-list" id="creditPackages"></div>
+    <div style="margin-top:.85rem;"><button class="btn btn-grad" onclick="showPage('premium')">👑 Premium — kredit cheksiz!</button></div>
+  </div>
+</div>
+
+<!-- ═══ PREMIUM ═══ -->
 <div class="page" id="page-premium">
-  <div class="page-header">
-    <h1>⭐ Premium</h1>
-    <p>Cheksiz imkoniyatlar</p>
+  <div class="phead">
+    <button class="back-btn" onclick="showPage('home')">← Orqaga</button>
+    <h1>👑 Premium</h1>
+    <p>Kreditlar to'g'risida bosh og'rig'ini unuting</p>
   </div>
-
-  <div class="plan-cards" id="planCards"></div>
-
-  <div class="card" style="margin-top:1rem;" id="paySection" style="display:none;">
-    <div class="card-title">💳 To'lov usuli</div>
-    <div class="pay-methods" id="payMethods">
-      <div class="pay-method active" onclick="selectPayMethod('click',this)">
-        <div class="pm-icon">🏦</div>
-        <div class="pm-name">Click</div>
+  <div class="section">
+    <div class="plan-cards" id="premiumPlans"></div>
+    <div class="card" id="payMethodCard" style="display:none;">
+      <div class="card-title">💳 To'lov usuli</div>
+      <div class="pay-grid">
+        <div class="pay-m sel" onclick="selPayMethod('click',this)"><div class="pm-icon">🏦</div><div class="pm-name">Click.uz</div></div>
+        <div class="pay-m" onclick="selPayMethod('payme',this)"><div class="pm-icon">💚</div><div class="pm-name">Payme</div></div>
       </div>
-      <div class="pay-method" onclick="selectPayMethod('payme',this)">
-        <div class="pm-icon">💚</div>
-        <div class="pm-name">Payme</div>
-      </div>
-      <div class="pay-method" onclick="selectPayMethod('balance',this)">
-        <div class="pm-icon">💰</div>
-        <div class="pm-name">Balans</div>
-      </div>
-    </div>
-    <button class="btn btn-primary" id="payBtn" onclick="processPay()">💳 To'lash</button>
-  </div>
-</div>
-
-<!-- ── STATS ── -->
-<div class="page" id="page-stats">
-  <div class="page-header">
-    <h1>📊 Statistika</h1>
-    <p>Faoliyatingiz tahlili</p>
-  </div>
-
-  <div class="stat-row">
-    <div class="stat-box"><div class="sb-val" id="sPres">0</div><div class="sb-lbl">🎨 Prezentatsiya</div></div>
-    <div class="stat-box"><div class="sb-val" id="sSlides">0</div><div class="sb-lbl">📄 Slaydlar</div></div>
-    <div class="stat-box"><div class="sb-val" id="sAi">0</div><div class="sb-lbl">🤖 AI so'rov</div></div>
-    <div class="stat-box"><div class="sb-val" id="sRef">0</div><div class="sb-lbl">👥 Referral</div></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">💰 Balans va daromad</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;">
-      <div style="font-size:.85rem;color:var(--tg-hint);">Joriy balans</div>
-      <div style="font-family:'Nunito',sans-serif;font-weight:900;font-size:1.3rem;color:var(--green);" id="sBalance">0 so'm</div>
-    </div>
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <div style="font-size:.85rem;color:var(--tg-hint);">Referral daromad</div>
-      <div style="font-family:'Nunito',sans-serif;font-weight:800;color:var(--amber);" id="sEarned">0 so'm</div>
-    </div>
-    <button class="btn btn-secondary" style="margin-top:1rem;" onclick="showPage('profile')">👥 Referral dasturi →</button>
-  </div>
-
-  <div class="card">
-    <div class="card-title">🕐 Oxirgi prezentatsiyalar</div>
-    <div id="historyList">
-      <div style="color:var(--tg-hint);font-size:.85rem;padding:.5rem 0;">Hali prezentatsiya yo'q</div>
+      <button class="btn btn-grad" id="payBtn" onclick="processPay()">💳 To'lash</button>
     </div>
   </div>
 </div>
 
-<!-- ── PROFILE ── -->
+<!-- ═══ REFERRAL ═══ -->
+<div class="page" id="page-referral">
+  <div class="phead">
+    <button class="back-btn" onclick="showPage('home')">← Orqaga</button>
+    <h1>🎁 Do'st taklif qiling</h1>
+    <p>Har bir do'stingiz uchun +5 kredit</p>
+  </div>
+  <div class="section">
+    <div class="stat-grid" style="margin-bottom:.85rem;">
+      <div class="stat-box"><div class="sv" id="refCount">0</div><div class="sl">Do'stlar</div></div>
+      <div class="stat-box"><div class="sv" id="refEarned" style="color:var(--green);">0</div><div class="sl">Kredit topildi</div></div>
+    </div>
+    <div style="font-weight:700;font-size:.8rem;margin-bottom:.45rem;">🔗 Sizning havolangiz:</div>
+    <div class="ref-box" id="refLink" onclick="copyRef()">https://t.me/QuizBotPro?start=REF12345</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+      <button class="btn btn-grad" onclick="copyRef()">📋 Nusxa olish</button>
+      <button class="btn btn-outline" onclick="shareRef()">📤 Ulashish</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ PROFILE ═══ -->
 <div class="page" id="page-profile">
-  <div class="page-header" style="margin-bottom:1rem;">
-    <h1>👤 Profil</h1>
+  <div class="phead"><h1>👤 Profil</h1></div>
+  <div class="prof-card">
+    <div class="prof-av" id="profAvatar">😊</div>
+    <div class="prof-name" id="profName">Foydalanuvchi</div>
+    <div class="prof-plan plan-free" id="profPlan">🎁 Bepul tarif</div>
   </div>
-
-  <div class="card" style="text-align:center;">
-    <div class="prof-avatar" id="profAv">😊</div>
-    <div class="prof-info">
-      <div class="prof-name" id="profName">Foydalanuvchi</div>
-      <div class="prof-plan plan-free" id="profPlanBadge">🎁 Bepul tarif</div>
+  <div class="section">
+    <div class="stat-grid" style="margin-bottom:.75rem;">
+      <div class="stat-box"><div class="sv" id="pTests">0</div><div class="sl">Testlar</div></div>
+      <div class="stat-box"><div class="sv" id="pCredit">3</div><div class="sl">Kreditlar</div></div>
     </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">👥 Referral Dasturi</div>
-    <div style="font-size:.82rem;color:var(--tg-hint);margin-bottom:.75rem;">Har bir do'stingiz uchun <strong style="color:var(--green);">5,000 so'm</strong> oling!</div>
-    <div class="ref-stats">
-      <div class="ref-stat"><div class="rv" id="rCount">0</div><div class="rl">Do'stlar</div></div>
-      <div class="ref-stat"><div class="rv" id="rEarned" style="color:var(--amber);">0</div><div class="rl">Daromad</div></div>
-      <div class="ref-stat"><div class="rv" id="rBalance" style="color:var(--green);">0</div><div class="rl">Balans</div></div>
+    <div class="action-list">
+      <div class="action-card" onclick="showPage('premium')"><div class="ac-icon" style="background:rgba(245,158,11,.08);color:var(--amber);">👑</div><div class="ac-body"><h3>Premium olish</h3><p>Cheksiz testlar va AI</p></div><div class="ac-arr">›</div></div>
+      <div class="action-card" onclick="showPage('referral')"><div class="ac-icon" style="background:rgba(0,224,138,.07);color:var(--green);">🎁</div><div class="ac-body"><h3>Referral dasturi</h3><p>Do'stlarni taklif qil</p></div><div class="ac-arr">›</div></div>
+      <div class="action-card" onclick="showPage('credits')"><div class="ac-icon" style="background:rgba(245,158,11,.08);color:var(--amber);">⚡</div><div class="ac-body"><h3>Kredit sotib olish</h3><p>PDF va AI uchun</p></div><div class="ac-arr">›</div></div>
     </div>
-    <div class="ref-link-box" id="refLink">https://t.me/YourBot?start=REF123</div>
-    <div style="display:flex;gap:.6rem;">
-      <button class="btn btn-primary" onclick="copyRefLink()" style="flex:2;">📋 Nusxa olish</button>
-      <button class="btn btn-secondary" onclick="shareRefLink()" style="flex:1;">📤</button>
-    </div>
-  </div>
-
-  <div style="display:flex;flex-direction:column;gap:.6rem;">
-    <button class="btn btn-secondary" onclick="showPage('premium')">⭐ Premium olish</button>
-    <button class="btn btn-secondary" style="color:var(--red);border-color:rgba(248,113,113,.3);" onclick="showToast('Tez kunda...')">🌐 Tilni o'zgartirish</button>
   </div>
 </div>
 
-<!-- Toast -->
-<div class="toast" id="toast"></div>
+<!-- ═══ PRESENTATION ═══ -->
+<div class="page" id="page-presentation">
+  <div class="phead">
+    <button class="back-btn" onclick="showPage('home')">← Orqaga</button>
+    <h1>🖥 AI Prezentatsiya</h1>
+    <p>Professional slaydlar — 3 kredit</p>
+  </div>
+  <div class="section">
+    <div class="form-field"><label>📝 Mavzu</label><input type="text" id="presTitle" placeholder="Masalan: Startup pitch, Biznes taklif..."/></div>
+    <div class="form-field"><label>📄 Slaydlar soni</label><div class="count-pills" id="presCountPills"></div></div>
+    <div class="form-field"><label>🎨 Dizayn uslubi</label><div class="choice-grid" id="presStyles"></div></div>
+    <div style="margin-bottom:.85rem;font-size:.75rem;color:var(--muted);">⚡ 3 kredit sarflanadi</div>
+    <button class="btn btn-grad" onclick="startPresGen()">🚀 Yaratish</button>
+  </div>
+  <div id="presGenProgress" style="display:none;" class="section">
+    <div class="gen-wrap">
+      <div class="gen-anim">🎨</div>
+      <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.1rem;">Prezentatsiya yaratilmoqda...</div>
+      <div class="pbar-bg"><div class="pbar" id="presPbar" style="width:0%"></div></div>
+      <div style="font-size:.75rem;color:var(--muted);margin-top:.35rem;" id="presPbarText">AI mavzuni tahlil qilmoqda...</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
 
 <script>
-// ── TELEGRAM WEBAPP INIT ──────────────────────────
 const tg = window.Telegram?.WebApp;
-if (tg) {
-  tg.ready();
-  tg.expand();
-  tg.MainButton.hide();
-}
+if(tg){ tg.ready(); tg.expand(); tg.MainButton.hide(); }
 
-// ── STATE ─────────────────────────────────────────
-const STATE = {
-  user: { name: 'Foydalanuvchi', plan: 'free', balance: 0, referrals: 0, earned: 0, presCount: 0, slidesTotal: 0, aiUsed: 0 },
-  create: { topic: '', slides: 10, style: 'business', lang: 'uz' },
-  selectedPlan: 'pro',
-  selectedPayMethod: 'click',
-  history: [],
+// ── STATE ──────────────────────────────────────
+const S = {
+  credits: 3, isPremium: false, plan: null,
+  name: tg?.initDataUnsafe?.user?.first_name || 'Foydalanuvchi',
+  tests: [], articles: [],
+  quiz: { questions:[], current:0, answers:[], score:0, testName:'' },
+  aiOpts: { count:10, diff:'easy', lang:'uz' },
+  artOpts: { type:'blog', tone:'rasmiy', length:'medium', lang:'uz', keywords:'' },
+  payMethod: 'click', payItem: null, selPlanId: null,
+  presOpts: { slides:10, style:'business' },
 };
 
-// Try get user data from URL params
-const urlParams = new URLSearchParams(window.location.search);
-const urlUid = urlParams.get('uid');
-if (tg?.initDataUnsafe?.user) {
-  STATE.user.name = tg.initDataUnsafe.user.first_name || 'Foydalanuvchi';
+// ── BANNERS ────────────────────────────────────
+const BANNERS = [
+  {title:'AI Maqola Yozuvchi',desc:'Professional maqolalar yarating. 2 kredit.',emoji:'✍️',btn:'Hozir boshlash →',action:'article',bg:'linear-gradient(135deg,#0a3a3a,#0d6060,#0a9a7a)'},
+  {title:'Guruh testi!',desc:'Sessiya yarating yoki kod bilan qo\'shiling.',emoji:'👥',btn:'Sessiyaga qo\'shilish',action:'group',bg:'linear-gradient(135deg,#1a1a8e,#3a1a8e,#6e1a8e)'},
+  {title:'PDF → Test!',desc:'Darsligingizni testga aylantiring. 1 kredit.',emoji:'📄',btn:'PDF yuklash',action:'pdf',bg:'linear-gradient(135deg,#0a2a60,#1a4a96,#0a60c0)'},
+  {title:'Premium — kredit cheksiz!',desc:'Barcha funksiyalar to\'liq ochiladi.',emoji:'👑',btn:'Premium olish',action:'premium',bg:'linear-gradient(135deg,#3a2000,#705000,#b07800)'},
+];
+let bannerIdx=0, bannerTimer=null;
+
+function initBanners(){
+  const dots=document.getElementById('sliderDots');
+  dots.innerHTML=BANNERS.map((_,i)=>`<div class="sdot${i===0?' active':''}" onclick="event.stopPropagation();showBanner(${i})"></div>`).join('');
+  showBanner(0);
+  bannerTimer=setInterval(()=>showBanner((bannerIdx+1)%BANNERS.length),4200);
 }
-
-// ── DATA ──────────────────────────────────────────
-const STYLES = [
-  {id:'business', emoji:'💼', name:'Business',   desc:'Professional'},
-  {id:'creative', emoji:'🎨', name:'Creative',   desc:'Rangdor'},
-  {id:'academic', emoji:'🎓', name:'Academic',   desc:'Ilmiy'},
-  {id:'startup',  emoji:'🚀', name:'Startup',    desc:'Dinamik'},
-  {id:'dark',     emoji:'🌙', name:'Dark Mode',  desc:'Qora fon'},
-  {id:'minimal',  emoji:'⬜', name:'Minimal',    desc:'Sof dizayn'},
-];
-
-const SLIDE_COUNTS = [5, 8, 10, 12, 15, 20, 25, 30];
-
-const LANGS = [
-  {code:'uz', flag:'🇺🇿', name:"O'zbek"},
-  {code:'ru', flag:'🇷🇺', name:'Русский'},
-  {code:'en', flag:'🇬🇧', name:'English'},
-];
-
-const TEMPLATES = [
-  {id:'t1', emoji:'💼', name:'Biznes taklif',   slides:10, style:'business'},
-  {id:'t2', emoji:'🎓', name:'Kurs taqdimoti',  slides:12, style:'academic'},
-  {id:'t3', emoji:'🚀', name:'Startup pitch',   slides:8,  style:'startup'},
-  {id:'t4', emoji:'📈', name:'Marketing',        slides:15, style:'business'},
-  {id:'t5', emoji:'🌟', name:'Portfolio',        slides:10, style:'creative'},
-  {id:'t6', emoji:'📊', name:'Moliyaviy',        slides:12, style:'minimal'},
-  {id:'t7', emoji:'🏆', name:'Yillik hisobot',   slides:20, style:'business'},
-  {id:'t8', emoji:'🎯', name:'Loyiha rejasi',    slides:10, style:'startup'},
-];
-
-const PLANS = {
-  basic: { name:'Basic', price:29000, slides:10, ai:5,  badge:'' },
-  pro:   { name:'Pro 🔥', price:59000, slides:30, ai:30, badge:'Ommabop' },
-  ultra: { name:'Ultra ⚡', price:99000, slides:-1, ai:-1, badge:'VIP' },
-};
-
-const TOPIC_SUGGESTIONS = [
-  "Sun'iy intellekt", "Marketing strategiyasi", "Python dasturlash",
-  "Biznes rejasi", "Startup", "Ta'lim islohotlari",
-];
-
-const GEN_STEPS = [
-  {text:"🧠 Mavzu tahlil qilinmoqda...", pct:20},
-  {text:"📝 Slayd mazmunlari yaratilmoqda...", pct:50},
-  {text:"🎨 Dizayn qo'llanilmoqda...", pct:75},
-  {text:"📦 Fayl tayyorlanmoqda...", pct:95},
-  {text:"✅ Tayyor!", pct:100},
-];
-
-// ── NAVIGATION ────────────────────────────────────
-function showPage(name) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + name).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n => {
-    n.classList.toggle('active', n.dataset.page === name);
-  });
-  window.scrollTo(0, 0);
-  if (name === 'stats') updateStats();
-  if (name === 'profile') updateProfile();
-  if (name === 'home') updateHome();
+function showBanner(i){
+  bannerIdx=i;const b=BANNERS[i];
+  document.getElementById('bannerTitle').textContent=b.title;
+  document.getElementById('bannerDesc').textContent=b.desc;
+  document.getElementById('heroBannerEmoji').textContent=b.emoji;
+  document.getElementById('bannerBtn').textContent=b.btn;
+  document.getElementById('heroBannerBg').style.background=b.bg;
+  document.querySelectorAll('.sdot').forEach((d,j)=>d.classList.toggle('active',j===i));
 }
+function bannerAction(){ showPage(BANNERS[bannerIdx].action); }
 
-// ── INIT ─────────────────────────────────────────
-function init() {
-  renderNav();
-  renderStyleGrid();
-  renderCountGrid();
-  renderLangPills();
-  renderTopicSuggestions();
-  renderTemplates();
-  renderPlans();
-  updateHome();
-  updateProfile();
-}
-
-function renderNav() {
-  const navItems = [
-    {page:'home',      icon:'🏠', label:'Bosh'},
-    {page:'create',    icon:'✨', label:'Yaratish'},
-    {page:'templates', icon:'📋', label:'Shablonlar'},
-    {page:'stats',     icon:'📊', label:'Statistika'},
-    {page:'profile',   icon:'👤', label:'Profil'},
-  ];
-  const nav = document.createElement('div');
-  nav.className = 'bottom-nav';
-  nav.innerHTML = navItems.map(n => `
-    <div class="nav-item${n.page==='home'?' active':''}" data-page="${n.page}" onclick="showPage('${n.page}')">
-      <div class="ni-icon">${n.icon}</div>
-      <div class="ni-label">${n.label}</div>
+// ── NAV ────────────────────────────────────────
+const NAV=[
+  {page:'home',icon:'🏠',label:'Bosh'},
+  {page:'article',icon:'✍️',label:'Maqola'},
+  {page:'my-tests',icon:'📚',label:'Testlar'},
+  {page:'profile',icon:'👤',label:'Profil'},
+  {page:'credits',icon:'⚡',label:'Kredit'},
+];
+function buildNav(){
+  const nav=document.createElement('div');
+  nav.className='bnav';
+  nav.innerHTML=NAV.map(n=>`
+    <div class="bni${n.page==='home'?' active':''}" data-page="${n.page}" onclick="showPage('${n.page}')">
+      <div class="bni-icon">${n.icon}</div>
+      <div class="bni-label">${n.label}</div>
     </div>`).join('');
   document.body.appendChild(nav);
 }
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg=document.getElementById('page-'+name);
+  if(pg) pg.classList.add('active');
+  document.querySelectorAll('.bni').forEach(n=>n.classList.toggle('active',n.dataset.page===name));
+  window.scrollTo(0,0);pg?.scrollTo(0,0);
+  if(name==='profile') updateProfile();
+  if(name==='credits') updateCredits();
+}
 
-function renderStyleGrid() {
-  document.getElementById('styleGrid').innerHTML = STYLES.map(s => `
-    <div class="style-card${s.id===STATE.create.style?' selected':''}" onclick="selectStyle('${s.id}',this)">
-      <div class="sc-icon">${s.emoji}</div>
-      <div class="sc-name">${s.name}</div>
-      <div class="sc-desc">${s.desc}</div>
+// ══════════════════════════════════════════════
+// ARTICLE WRITER
+// ══════════════════════════════════════════════
+const ART_TYPES=[
+  {id:'blog',icon:'📝',name:'Blog maqola',desc:'Informatsion'},
+  {id:'news',icon:'📰',name:'Yangilik',desc:'Xabar uslubi'},
+  {id:'seo',icon:'🔍',name:'SEO maqola',desc:'Qidiruv uchun'},
+  {id:'academic',icon:'🎓',name:'Akademik',desc:'Ilmiy uslub'},
+  {id:'review',icon:'⭐',name:'Sharh',desc:'Mahsulot/xizmat'},
+  {id:'social',icon:'📱',name:'Ijtimoiy tarmoq',desc:'Post uchun'},
+];
+const TONES=['Rasmiy','Norasmiy','Ilmiy','Kreativ','Sodda','Ishontiruvchi'];
+const LENGTHS=[
+  {id:'short',label:'Qisqa',desc:'300-500 so\'z'},
+  {id:'medium',label:'O\'rta',desc:'600-900 so\'z'},
+  {id:'long',label:'Uzun',desc:'1000-1500 so\'z'},
+];
+const ART_SUGGESTIONS=['Sun\'iy intellekt','Sog\'lom turmush','O\'zbekiston iqtisodiyoti','Startap biznes','Ta\'lim tizimi','Ekologiya','Texnologiya','Sport va salomatlik'];
+const ART_GEN_STEPS=[
+  {id:'analyze',icon:'🔍',text:'Mavzu va kalit so\'zlar tahlil qilinmoqda...'},
+  {id:'structure',icon:'📐',text:'Maqola strukturasi yaratilmoqda...'},
+  {id:'intro',icon:'✍️',text:'Kirish qismi yozilmoqda...'},
+  {id:'body',icon:'📖',text:'Asosiy qism va bo\'limlar yozilmoqda...'},
+  {id:'conclusion',icon:'🏁',text:'Xulosa va QO tayyorlanmoqda...'},
+  {id:'polish',icon:'✨',text:'Matn sayqallanmoqda va tekshirilmoqda...'},
+];
+
+function renderArticleUI(){
+  // Types
+  document.getElementById('articleTypeGrid').innerHTML=ART_TYPES.map(t=>`
+    <div class="at-card${t.id==='blog'?' sel':''}" onclick="selArtType('${t.id}',this)">
+      <div class="at-icon">${t.icon}</div>
+      <div class="at-name">${t.name}</div>
+      <div class="at-desc">${t.desc}</div>
     </div>`).join('');
+  // Suggestions
+  document.getElementById('artSuggestions').innerHTML=ART_SUGGESTIONS.map(s=>
+    `<div class="suggest-chip" onclick="setArtTopic('${s}')">${s}</div>`
+  ).join('');
+  // Tones
+  document.getElementById('tonePills').innerHTML=TONES.map((t,i)=>
+    `<div class="tone-pill${i===0?' sel':''}" onclick="selTone('${t}',this)">${t}</div>`
+  ).join('');
+  // Lengths
+  document.getElementById('lengthPills').innerHTML=LENGTHS.map(l=>
+    `<div class="lpill${l.id==='medium'?' sel':''}" onclick="selLength('${l.id}',this)">${l.label} <span style="color:var(--muted);font-size:.65rem;">${l.desc}</span></div>`
+  ).join('');
+  // Lang
+  document.getElementById('artLangGrid').innerHTML=`
+    <div class="choice-btn sel" onclick="selArtLang('uz',this)"><div class="cb-icon">🇺🇿</div><div class="cb-name">O'zbek</div></div>
+    <div class="choice-btn" onclick="selArtLang('ru',this)"><div class="cb-icon">🇷🇺</div><div class="cb-name">Rus</div></div>
+    <div class="choice-btn" onclick="selArtLang('en',this)"><div class="cb-icon">🇬🇧</div><div class="cb-name">Ingliz</div></div>`;
 }
 
-function renderCountGrid() {
-  document.getElementById('countGrid').innerHTML = SLIDE_COUNTS.map(n => `
-    <div class="count-btn${n===STATE.create.slides?' selected':''}" onclick="selectCount(${n},this)">${n}</div>`).join('');
+function selArtType(id,el){
+  S.artOpts.type=id;
+  document.getElementById('articleTypeGrid').querySelectorAll('.at-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function setArtTopic(t){ document.getElementById('artTopic').value=t; }
+function selTone(t,el){
+  S.artOpts.tone=t;
+  document.getElementById('tonePills').querySelectorAll('.tone-pill').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function selLength(l,el){
+  S.artOpts.length=l;
+  document.getElementById('lengthPills').querySelectorAll('.lpill').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+function selArtLang(l,el){
+  S.artOpts.lang=l;
+  document.getElementById('artLangGrid').querySelectorAll('.choice-btn').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
 }
 
-function renderLangPills() {
-  document.getElementById('langPills').innerHTML = LANGS.map(l => `
-    <div class="lang-pill${l.code===STATE.create.lang?' selected':''}" onclick="selectLang('${l.code}',this)">
-      ${l.flag} ${l.name}
-    </div>`).join('');
+function artNextStep(n){
+  if(n===2 && !document.getElementById('artTopic').value.trim()){ toast('⚠️ Mavzuni kiriting!'); return; }
+  [1,2,3].forEach(i=>{
+    document.getElementById('artStep'+i).style.display=i===n?'block':'none';
+    const ws=document.getElementById('artws'+i);
+    ws.className='wstep'+(i<n?' done':i===n?' active':'');
+  });
+  if(n===3) renderArtConfirm();
 }
 
-function renderTopicSuggestions() {
-  document.getElementById('topicSuggestions').innerHTML = TOPIC_SUGGESTIONS.map(s => `
-    <button class="btn btn-sm btn-secondary" style="width:auto;" onclick="setTopic('${s}')">${s}</button>`).join('');
-}
-
-function renderTemplates() {
-  const html = TEMPLATES.map(t => `
-    <div class="tmpl-card" onclick="useTemplate('${t.id}')">
-      <div class="tmpl-icon">${t.emoji}</div>
-      <div class="tmpl-name">${t.name}</div>
-      <div class="tmpl-slides">📄 ${t.slides} slayd</div>
-    </div>`).join('');
-  const quickHtml = TEMPLATES.slice(0,4).map(t => `
-    <div class="tmpl-card" onclick="useTemplate('${t.id}')">
-      <div class="tmpl-icon">${t.emoji}</div>
-      <div class="tmpl-name">${t.name}</div>
-      <div class="tmpl-slides">📄 ${t.slides} slayd</div>
-    </div>`).join('');
-  document.getElementById('allTemplates').innerHTML = html;
-  document.getElementById('quickTemplates').innerHTML = quickHtml;
-}
-
-function renderPlans() {
-  document.getElementById('planCards').innerHTML = Object.entries(PLANS).map(([id, p]) => {
-    const price = p.price.toLocaleString('ru-RU');
-    const slides = p.slides === -1 ? 'Cheksiz' : p.slides;
-    const ai = p.ai === -1 ? 'Cheksiz' : p.ai;
-    return `<div class="plan-card${id==='pro'?' popular':''}" id="plan_${id}" onclick="selectPlan('${id}')">
-      ${p.badge ? `<div class="plan-hot">${p.badge}</div>` : ''}
-      <div class="plan-name">${p.name}</div>
-      <div class="plan-price">${price} <span>so'm/oy</span></div>
-      <div class="plan-feats">
-        <div class="plan-feat">${slides} ta prezentatsiya</div>
-        <div class="plan-feat">${ai} AI so'rov</div>
-        <div class="plan-feat">PPTX + PDF + Rasmlar</div>
-        <div class="plan-feat">Barcha shablonlar</div>
-      </div>
+function renderArtConfirm(){
+  const typeObj=ART_TYPES.find(t=>t.id===S.artOpts.type);
+  const lenObj=LENGTHS.find(l=>l.id===S.artOpts.length);
+  const langMap={uz:'🇺🇿 O\'zbek',ru:'🇷🇺 Rus',en:'🇬🇧 Ingliz'};
+  document.getElementById('artConfirmCard').innerHTML=`
+    <div class="card-title">✅ Tasdiqlash</div>
+    <div style="display:flex;flex-direction:column;gap:.38rem;font-size:.82rem;">
+      <div>📝 Mavzu: <strong>${document.getElementById('artTopic').value}</strong></div>
+      <div>📂 Turi: <strong>${typeObj.icon} ${typeObj.name}</strong></div>
+      <div>🎭 Uslub: <strong>${S.artOpts.tone}</strong></div>
+      <div>📏 Uzunlik: <strong>${lenObj.label} (${lenObj.desc})</strong></div>
+      <div>🌐 Til: <strong>${langMap[S.artOpts.lang]}</strong></div>
+      ${S.artOpts.keywords?`<div>🔑 Kalit so'zlar: <strong>${S.artOpts.keywords}</strong></div>`:''}
     </div>`;
-  }).join('');
 }
 
-// ── CREATE FLOW ───────────────────────────────────
-let currentStep = 1;
+async function startArticleGen(){
+  if(S.credits<2){ toast('⚡ 2 kredit kerak!'); showPage('credits'); return; }
+  document.getElementById('artStep3').style.display='none';
+  document.getElementById('artGenProgress').style.display='block';
 
-function goStep(n) {
-  if (n === 2 && !document.getElementById('topicInput').value.trim()) {
-    showToast('⚠️ Mavzuni kiriting!'); return;
+  // Render gen steps
+  document.getElementById('artGenSteps').innerHTML=ART_GEN_STEPS.map(s=>
+    `<div class="gen-step" id="gs_${s.id}">
+      <div class="gs-icon">⏳</div>
+      <div class="gs-text">${s.text}</div>
+    </div>`
+  ).join('');
+
+  const pcts=[15,30,50,70,88,100];
+  for(let i=0;i<ART_GEN_STEPS.length;i++){
+    await sleep(850+Math.random()*400);
+    // mark prev done
+    if(i>0){
+      const prev=document.getElementById('gs_'+ART_GEN_STEPS[i-1].id);
+      if(prev){ prev.className='gen-step done'; prev.querySelector('.gs-icon').textContent='✅'; }
+    }
+    const cur=document.getElementById('gs_'+ART_GEN_STEPS[i].id);
+    if(cur){ cur.className='gen-step active'; cur.querySelector('.gs-icon').textContent=ART_GEN_STEPS[i].icon; }
+    document.getElementById('artPbar').style.width=pcts[i]+'%';
   }
-  STATE.create.topic = document.getElementById('topicInput').value.trim();
-  currentStep = n;
-  [1,2,3,4].forEach(i => {
-    document.getElementById('createStep'+i).style.display = i===n ? 'block' : 'none';
-    const stepEl = document.getElementById('step'+i);
-    if (i < n) { stepEl.className='step done'; }
-    else if (i === n) { stepEl.className='step active'; }
-    else { stepEl.className='step'; }
-  });
-  if (n === 4) updateConfirm();
+  await sleep(600);
+  // mark last done
+  const last=document.getElementById('gs_'+ART_GEN_STEPS[ART_GEN_STEPS.length-1].id);
+  if(last){ last.className='gen-step done'; last.querySelector('.gs-icon').textContent='✅'; }
+
+  S.credits-=2; updateCreditsDisplay();
+  const topic=document.getElementById('artTopic').value;
+  S.artOpts.keywords=document.getElementById('artKeywords').value;
+  await sleep(300);
+  showArticleResult(topic);
+
+  // Reset wizard
+  setTimeout(()=>{
+    document.getElementById('artGenProgress').style.display='none';
+    document.getElementById('artStep1').style.display='block';
+    [1,2,3].forEach(i=>{
+      const ws=document.getElementById('artws'+i);
+      ws.className='wstep'+(i===1?' active':'');
+    });
+    document.getElementById('artTopic').value='';
+    document.getElementById('artKeywords').value='';
+  },500);
 }
 
-function updateConfirm() {
-  const style = STYLES.find(s => s.id === STATE.create.style);
-  const lang = LANGS.find(l => l.code === STATE.create.lang);
-  document.getElementById('confirmDetails').innerHTML = `
-    <div>📝 Mavzu: <strong>${STATE.create.topic}</strong></div>
-    <div>📄 Slaydlar: <strong>${STATE.create.slides} ta</strong></div>
-    <div>🎨 Uslub: <strong>${style?.emoji} ${style?.name}</strong></div>
-    <div>🌐 Til: <strong>${lang?.flag} ${lang?.name}</strong></div>`;
+function generateArticleHTML(topic, type, tone, length, keywords){
+  const typeObj=ART_TYPES.find(t=>t.id===type)||ART_TYPES[0];
+  const wordCounts={short:'~420',medium:'~750',long:'~1200'};
+  const readTimes={short:'2',medium:'4',long:'6'};
+
+  const articles = {
+    blog: generateBlogArticle(topic, tone, length, keywords),
+    news: generateNewsArticle(topic, tone, length),
+    seo: generateSEOArticle(topic, length, keywords),
+    academic: generateAcademicArticle(topic, length),
+    review: generateReviewArticle(topic, length),
+    social: generateSocialArticle(topic),
+  };
+  const content = articles[type] || articles['blog'];
+  const wc = wordCounts[length];
+  const rt = readTimes[length];
+
+  return {html: content, wordCount: wc, readTime: rt, typeObj};
 }
 
-function selectStyle(id, el) {
-  STATE.create.style = id;
-  document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
+function generateBlogArticle(topic, tone, length, kw){
+  const kwSection = kw ? `<p>Bu maqolada <strong>${kw}</strong> kabi muhim tushunchalar atroflicha yoritiladi.</p>` : '';
+  return `
+<h2>Kirish</h2>
+<p><strong>${topic}</strong> — bugungi kunda juda dolzarb mavzulardan biri hisoblanadi. Texnologiyalar rivojlanishi va jamiyatimiz o'zgarishi bilan birga, bu soha ham yangi imkoniyatlar va qiziqarli savollarni yuzaga keltirmoqda.</p>
+${kwSection}
+<blockquote>"Bilim — bu kuch, ammo uni qo'llash — bu donolik." — zamonaviy ta'lim falsafasidan</blockquote>
+<h2>Asosiy fikrlar</h2>
+<p>${topic} haqida to'liq tushunchaga ega bo'lish uchun bir nechta muhim jihatlarni ko'rib chiqish kerak. Birinchi navbatda, bu soha qanday rivojlanganligini va hozirgi holati qanday ekanligini tushunish zarur.</p>
+<h3>1. Tarixiy asos va rivojlanish</h3>
+<p>Har qanday soha singari, ${topic} ham o'z rivojlanish yo'lidan o'tgan. Dastlabki bosqichlarda oddiy ko'ringan masalalar, zamonaviy tadqiqotlar orqali yangi ma'no kasb etgan. Mutaxassislar ushbu soha potensialini juda yuqori baholashadi.</p>
+<ul>
+  <li>Boshlang'ich rivojlanish bosqichi va asosiy kashfiyotlar</li>
+  <li>Zamonaviy tendensiyalar va innovatsiyalar</li>
+  <li>Kelajakdagi istiqbollar va imkoniyatlar</li>
+</ul>
+<h3>2. Amaliy qo'llanish</h3>
+<p>${topic} sohasidagi bilimlari hayotning turli sohalarida qo'llaniladi. Xususan, biznes, ta'lim, sog'liqni saqlash va texnologiya sektorlarida bu bilimlar tobora muhim ahamiyat kasb etmoqda. Tadqiqotlar shuni ko'rsatadiki, ushbu bilimga ega mutaxassislar mehnat bozorida yuqori talab bilan uchraydi.</p>
+<h3>3. Kelajak imkoniyatlari</h3>
+<p>Ekspertlarning fikricha, ${topic} keyingi 5-10 yil ichida yanada kengayib, yangi imkoniyatlar yaratadi. Raqamlashtirish va globallashuv jarayonlari bu sohadagi o'zgarishlarni yanada tezlashtirmoqda.</p>
+<h2>Muhim maslahatlar</h2>
+<p>Agar siz ${topic} sohasini chuqur o'rganishni istasangiz, quyidagi amaliy qadamlarni bajarishni tavsiya etamiz:</p>
+<ul>
+  <li><strong>Muntazam o'qing</strong> — soha yangiliklari va ilmiy maqolalarni kuzatib boring</li>
+  <li><strong>Amaliyot qiling</strong> — bilimlarni darhol hayotga tatbiq eting</li>
+  <li><strong>Mutaxassislar bilan bog'laning</strong> — tajribali odamlar bilan muloqot qiling</li>
+  <li><strong>Kurslar va treninglar</strong> — rasmiy ta'lim dasturlarida ishtirok eting</li>
+</ul>
+<h2>Xulosa</h2>
+<p>${topic} — bu faqat bitta soha emas, balki keng qamrovli tafakkur tizimi. Ushbu maqolada keltirilgan ma'lumotlar sizga yangi istiqbollar ochishda yordam beradi degan umiddamiz. Hayotingizda muvaffaqiyatlar tilaymiz va bilim izlashdan to'xtamang!</p>
+`;
 }
 
-function selectCount(n, el) {
-  STATE.create.slides = n;
-  document.querySelectorAll('.count-btn').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
+function generateNewsArticle(topic, tone, length){
+  const today = new Date().toLocaleDateString('uz-UZ');
+  return `
+<h2>Asosiy voqea</h2>
+<p><strong>${topic}</strong> bo'yicha so'nggi ma'lumotlarga ko'ra, ushbu sohadagi muhim o'zgarishlar kuzatilmoqda. Mutaxassislar va ekspertlarning fikricha, bu o'zgarishlar keng jamoatchilik uchun alohida ahamiyat kasb etadi.</p>
+<blockquote>"Bu sohadagi yangiliklar nafaqat mahalliy, balki xalqaro miqyosda ham muhim o'zgarishlarga sabab bo'lishi mumkin."</blockquote>
+<h2>Tafsilotlar</h2>
+<p>Manbalar ma'lumotlariga ko'ra, ${topic} bo'yicha muhim qarorlar qabul qilingan. Ushbu qarorlar amalga oshirilishi bilan bog'liq tadbirlar kelgusi haftalarda boshlangani ma'lum qilindi.</p>
+<h3>Mutaxassislar fikri</h3>
+<p>Soha ekspertlari bu voqeani ijobiy holat sifatida baholamoqda. Ularning ta'kidlashicha, ${topic} sohasidagi bu rivojlanish uzoq kutilgan edi va hozir amalga oshayotgani alohida ahamiyatga ega.</p>
+<h3>Keyingi qadam</h3>
+<p>Rasmiy manbalarga ko'ra, ushbu masala bo'yicha keyingi o'n kun ichida batafsil ma'lumot ommaga e'lon qilinishi rejalashtirilgan. Kuzatuvchilar ushbu jarayonni sinchkovlik bilan kuzatib bormoqda.</p>
+<h2>Xulosa</h2>
+<p>${topic} mavzusidagi so'nggi voqealar soha rivojiga sezilarli ta'sir ko'rsatadi deb kutilmoqda. Yangiliklar paydo bo'lishi bilan ma'lumot yangilab boriladi.</p>
+`;
 }
 
-function selectLang(code, el) {
-  STATE.create.lang = code;
-  document.querySelectorAll('.lang-pill').forEach(c => c.classList.remove('selected'));
-  el.classList.add('selected');
-  updateConfirm();
+function generateSEOArticle(topic, length, keywords){
+  const kw=keywords||topic;
+  return `
+<h2>${topic} nima va nima uchun muhim?</h2>
+<p>Agar siz <strong>${topic}</strong> haqida izlayotgan bo'lsangiz, to'g'ri joyga keldingiz. Bu qo'llanma sizga <strong>${kw}</strong> haqida to'liq va tushunarli ma'lumot beradi. Ko'plab odamlar ushbu mavzu bilan tanish, ammo chuqur bilimga ega emas — mana shu bo'shliqni to'ldirish uchun yozdik.</p>
+<h2>${topic} bilan qanday boshlash kerak?</h2>
+<p>Yangi boshlovchilar uchun <strong>${topic}</strong> murakkab tuyulishi mumkin, lekin aslida uni bosqichma-bosqich o'rganish juda qiziqarli jarayon. Quyida eng muhim qadamlarni ko'rib chiqamiz:</p>
+<ul>
+  <li><strong>1-qadam:</strong> Asosiy tushunchalarni o'rganing — baza muhim</li>
+  <li><strong>2-qadam:</strong> Amaliy mashqlar bilan bilimni mustahkamlang</li>
+  <li><strong>3-qadam:</strong> Murakkab mavzularga o'ting va tajriba orttiring</li>
+</ul>
+<h2>${topic} bo'yicha tez-tez beriladigan savollar</h2>
+<h3>${topic} qancha vaqt talab etadi?</h3>
+<p>Ko'pchilik bu savolni beradi. Javob sizning maqsadingizga va vaqt ajratishingizga bog'liq. O'rtacha hisobda boshlang'ich bilimni olish uchun 2-4 hafta yetarli.</p>
+<h3>Bu sohada muvaffaqiyat sirri nima?</h3>
+<p>Muvaffaqiyat uchun asosiy shart — muntazamlik va sabr. <strong>${kw}</strong> sohasida yaxshi natijaga erishgan odamlarning barchasi bir narsaga urg'u beradi: har kuni biroz bo'lsa ham mashq qilish.</p>
+<h2>Xulosa va qo'ng'iroq harakati</h2>
+<p><strong>${topic}</strong> — bu investitsiya qilingan vaqt va kuch o'z mevасini ko'p martalab qaytaradigan soha. Bugun birinchi qadamni qo'ying va o'z yo'lingizda davom eting!</p>
+`;
 }
 
-function setTopic(topic) {
-  document.getElementById('topicInput').value = topic;
-  STATE.create.topic = topic;
+function generateAcademicArticle(topic, length){
+  return `
+<h2>Kirish (Introduction)</h2>
+<p>Mazkur maqola <strong>${topic}</strong> mavzusini ilmiy-nazariy nuqtai nazardan tahlil qilishga bag'ishlangan. So'nggi o'n yillikdagi tadqiqotlar ko'rsatishicha, ushbu soha ilmiy hamjamiyat e'tiborining markazida turibdi. Tadqiqotning maqsadi mavjud nazariy yondashuvlarni tizimlashtirish va amaliy xulosalar chiqarishdan iborat.</p>
+<blockquote>"Ilm-fan to'xtamaydi, chunki hayot ham to'xtamaydi." — L. Paster</blockquote>
+<h2>Adabiyotlar sharhi (Literature Review)</h2>
+<p>${topic} sohasidagi ilmiy tadqiqotlar XX asrning o'rtalaridan boshlab jadal rivojlana boshladi. Bir qator taniqli olimlar va institutlar bu borada muhim hissa qo'shgan. Nazariy asoslar uch asosiy yo'nalishda shakllangan:</p>
+<ul>
+  <li>Klassik nazariyalar va ularning zamonaviy talqini</li>
+  <li>Empirik tadqiqotlar va statistik tahlillar</li>
+  <li>Amaliy tadqiqotlar va sohaviy case study'lar</li>
+</ul>
+<h2>Metodologiya</h2>
+<p>Tadqiqotda kompleks metodologik yondashuv qo'llanilib, sifat va miqdoriy tahlil usullari birgalikda ishlatildi. Ma'lumotlar to'plash bosqichida birlamchi va ikkilamchi manbalardan foydalanildi.</p>
+<h2>Natijalar va muhokama</h2>
+<p>Olingan natijalar ${topic} sohasidagi mavjud nazariy ko'rsatmalarga to'liq mos keladi. Shuningdek, bir qator yangi tendensiyalar aniqlandi. Tadqiqot natijalari ko'rsatdiki, ushbu sohaning rivojlanish sur'ati yildan-yilga oshib bormoqda.</p>
+<h2>Xulosa</h2>
+<p>${topic} bo'yicha o'tkazilgan ushbu tadqiqot bir qator muhim natijalarni berdi. Kelajakdagi tadqiqotlar uchun bir nechta ilmiy savollar ochiq qolmoqda, bu esa sohaning yanada rivojlanishi uchun imkoniyat yaratadi.</p>
+`;
 }
 
-function useTemplate(id) {
-  const t = TEMPLATES.find(t => t.id === id);
-  if (!t) return;
-  STATE.create.style = t.style;
-  STATE.create.slides = t.slides;
-  showPage('create');
-  renderStyleGrid(); renderCountGrid();
-  showToast(`✅ ${t.name} shabloni tanlandi!`);
+function generateReviewArticle(topic, length){
+  return `
+<h2>Umumiy taassurot</h2>
+<p><strong>${topic}</strong> — bu sohada juda ko'p variantlar mavjud, lekin biz atroflicha sinab ko'rib, eng muhim tomonlarini tahlil qildik. Bu sharh real foydalanuvchi tajribasiga asoslanadi.</p>
+<h2>Ijobiy tomonlari ✅</h2>
+<ul>
+  <li><strong>Sifat:</strong> Umuman olganda sifat kutilganidan yuqori chiqdi</li>
+  <li><strong>Foydalanish qulayligi:</strong> Boshlang'ichlar uchun ham tushunarli va qulay</li>
+  <li><strong>Qiymat-narx nisbati:</strong> Berilgan narxga ko'ra, taklif juda foydali</li>
+  <li><strong>Qo'llab-quvvatlash:</strong> Savollaringizga tez va malakali javob beriladi</li>
+</ul>
+<h2>Kamchiliklari ❌</h2>
+<ul>
+  <li>Ba'zan javob kutish vaqti biroz uzun bo'ladi</li>
+  <li>Ilg'or foydalanuvchilar uchun biroz cheklovlar mavjud</li>
+  <li>Hujjatlashtirish to'liq emas, ba'zi tafsilotlar etishmaydi</li>
+</ul>
+<blockquote>"${topic} bilan bir oylik tajribamdan keyin aytishim mumkinki, bu sohadagi eng yaxshi variantlardan biri."</blockquote>
+<h2>Kimga tavsiya etamiz?</h2>
+<p>Bu mahsulot/xizmat ayniqsa boshlovchilar va o'rta daraja foydalanuvchilar uchun ideal. Professional darajada esa boshqa alternativlarni ham ko'rib chiqish tavsiya etiladi.</p>
+<h2>Yakuniy baho: ⭐⭐⭐⭐ (4/5)</h2>
+<p>${topic} umuman olganda yaxshi taassurot qoldirdi. Kichik kamchiliklariga qaramay, bu sohada etakchi o'rinni egallashda barcha asoslar mavjud.</p>
+`;
 }
 
-async function startGeneration() {
-  // Hide steps, show progress
-  document.getElementById('createStep4').style.display = 'none';
-  document.getElementById('genProgress').style.display = 'block';
+function generateSocialArticle(topic){
+  return `
+<h2>🔥 Asosiy xabar</h2>
+<p><strong>${topic}</strong> haqida ko'plar bilmagan 5 ta muhim fakt! Bularni bilganingizdan so'ng fikringiz butunlay o'zgaradi 👇</p>
+<h2>1️⃣ Birinchi fakt</h2>
+<p>${topic} aslida biz o'ylagandek emas. Ko'pchilik noto'g'ri tushunchaga ega, lekin haqiqat ancha qiziqarli...</p>
+<h2>2️⃣ Ikkinchi fakt</h2>
+<p>Tadqiqotlar ko'rsatishicha, ${topic} bilan shug'ullanuvchi odamlar o'rtacha 30% ko'proq muvaffaqiyatga erishar ekan! Bu raqam sizni hayron qoldirdimi?</p>
+<h2>3️⃣ Amaliy maslahat</h2>
+<p>Bugun siz ham boshlay olasiz. Kerak bo'lgan narsa faqat — istak va birinchi qadam! ✅</p>
+<blockquote>💬 "Eng yaxshi vaqt 20 yil oldin edi. Ikkinchi eng yaxshi vaqt — hozir!"</blockquote>
+<h2>📣 Xulosa</h2>
+<p>${topic} bo'yicha biror savolingiz bormi? Izohda yozing! 👇 Bu postni do'stlaringiz bilan ham ulashing — bilim ulashgan sari ko'payadi! ♻️</p>
+<p>#${topic.replace(/\s+/g,'_')} #bilim #rivojlanish #motivatsiya</p>
+`;
+}
 
-  for (const s of GEN_STEPS) {
-    await sleep(900);
-    document.getElementById('genBar').style.width = s.pct + '%';
-    document.getElementById('genPercent').textContent = s.pct + '%';
-    document.getElementById('genStepText').textContent = s.text;
+function showArticleResult(topic){
+  const {type,tone,length,lang}=S.artOpts;
+  const {html,wordCount,readTime,typeObj}=generateArticleHTML(topic,type,tone,length,S.artOpts.keywords);
+  const langMap={uz:'🇺🇿 O\'zbek',ru:'🇷🇺 Rus',en:'🇬🇧 Ingliz'};
+
+  S.articles.push({topic,type,tone,length,html,date:new Date().toLocaleDateString()});
+
+  document.getElementById('articleResultWrap').innerHTML=`
+    <div class="article-meta">
+      <span>${typeObj.icon} ${typeObj.name}</span>
+      <span>🎭 ${tone}</span>
+      <span>${langMap[lang]}</span>
+      <span>⏱ ${readTime} daqiqa o'qish</span>
+    </div>
+    <div class="article-title">${topic}</div>
+    <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+      <div class="word-count-badge">📝 ${wordCount} so'z</div>
+      <div style="font-size:.7rem;color:var(--muted);">${new Date().toLocaleDateString()}</div>
+    </div>
+    <div class="article-divider"></div>
+    <div class="article-body" id="articleBody">${html}</div>
+    <div class="article-action-bar">
+      <button class="btn btn-teal btn-sm" onclick="copyArticle()" style="width:100%;">📋 Nusxa olish</button>
+      <button class="btn btn-outline btn-sm" onclick="shareArticle()" style="width:100%;">📤 Ulashish</button>
+    </div>
+    <div style="height:.5rem;"></div>
+  `;
+  showPage('article-result');
+  toast('✅ Maqola tayyor! '+ wordCount + ' so\'z');
+  if(tg) tg.HapticFeedback?.notificationOccurred('success');
+}
+
+function copyArticle(){
+  const body=document.getElementById('articleBody');
+  if(body){
+    const text=body.innerText||body.textContent;
+    navigator.clipboard?.writeText(text).then(()=>toast('📋 Maqola nusxa olindi!'));
   }
-
-  await sleep(400);
-  document.getElementById('genProgress').style.display = 'none';
-  document.getElementById('genResult').style.display = 'block';
-
-  // Scroll to top and clear steps indicator
-  [1,2,3,4].forEach(i => document.getElementById('step'+i).className='step done');
-
-  const style = STYLES.find(s => s.id === STATE.create.style);
-  const lang = LANGS.find(l => l.code === STATE.create.lang);
-  document.getElementById('resultMeta').textContent =
-    `${STATE.create.slides} slayd · ${style?.name} · ${lang?.name}`;
-
-  // Update stats
-  STATE.user.presCount++;
-  STATE.user.slidesTotal += STATE.create.slides;
-  STATE.user.aiUsed++;
-  STATE.history.unshift({
-    topic: STATE.create.topic, slides: STATE.create.slides,
-    style: style?.name, date: new Date().toLocaleDateString('uz-UZ')
-  });
-
-  updateHome();
-  if (tg) tg.HapticFeedback?.notificationOccurred('success');
+  if(tg) tg.HapticFeedback?.impactOccurred('light');
 }
 
-function resetCreate() {
-  currentStep = 1;
-  document.getElementById('topicInput').value = '';
-  document.getElementById('genResult').style.display = 'none';
-  document.getElementById('genProgress').style.display = 'none';
-  [1,2,3,4].forEach(i => {
-    document.getElementById('createStep'+i).style.display = i===1?'block':'none';
-    document.getElementById('step'+i).className='step'+(i===1?' active':'');
-  });
-}
-
-function downloadFormat(fmt) {
-  const fmtNames = {pptx:'PowerPoint', pdf:'PDF', images:'Rasmlar (ZIP)', google:'Google Slides'};
-  showToast(`📥 ${fmtNames[fmt]} tayyorlanmoqda...`);
-  if (tg) tg.HapticFeedback?.impactOccurred('medium');
-}
-
-// ── PREMIUM ───────────────────────────────────────
-function selectPlan(id) {
-  STATE.selectedPlan = id;
-  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
-  document.getElementById('plan_'+id)?.classList.add('selected');
-  document.getElementById('paySection').style.display = 'block';
-  const plan = PLANS[id];
-  document.getElementById('payBtn').textContent = `💳 To'lash — ${plan.price.toLocaleString('ru-RU')} so'm`;
-}
-
-function selectPayMethod(method, el) {
-  STATE.selectedPayMethod = method;
-  document.querySelectorAll('.pay-method').forEach(m => m.classList.remove('active'));
-  el.classList.add('active');
-}
-
-async function processPay() {
-  const plan = PLANS[STATE.selectedPlan];
-  document.getElementById('payBtn').textContent = '⏳ Kutib turing...';
-  document.getElementById('payBtn').disabled = true;
-  await sleep(2000);
-  STATE.user.plan = STATE.selectedPlan;
-  document.getElementById('payBtn').textContent = '✅ Premium faollashtirildi!';
-  showToast('🎉 Premium tarif yoqildi!');
-  updateProfile();
-  if (tg) tg.HapticFeedback?.notificationOccurred('success');
-}
-
-// ── PROFILE & STATS ───────────────────────────────
-function updateHome() {
-  document.getElementById('hStatPres').textContent = STATE.user.presCount;
-  document.getElementById('hStatSlides').textContent = STATE.user.slidesTotal;
-}
-
-function updateStats() {
-  document.getElementById('sPres').textContent = STATE.user.presCount;
-  document.getElementById('sSlides').textContent = STATE.user.slidesTotal;
-  document.getElementById('sAi').textContent = STATE.user.aiUsed;
-  document.getElementById('sRef').textContent = STATE.user.referrals;
-  document.getElementById('sBalance').textContent = STATE.user.balance.toLocaleString('ru-RU') + ' so\'m';
-  document.getElementById('sEarned').textContent = STATE.user.earned.toLocaleString('ru-RU') + ' so\'m';
-  const hist = document.getElementById('historyList');
-  if (!STATE.history.length) {
-    hist.innerHTML = '<div style="color:var(--tg-hint);font-size:.85rem;padding:.5rem 0;">Hali prezentatsiya yo\'q</div>';
-    return;
+function shareArticle(){
+  const body=document.getElementById('articleBody');
+  if(tg && body){
+    const text='✍️ AI yozgan maqolam:\n\n'+(body.innerText||'').substring(0,200)+'...\n\n@QuizBotPro orqali yaratildi';
+    tg.switchInlineQuery(text,['users','groups']);
+  } else {
+    toast('📤 Telegram da oching!');
   }
-  hist.innerHTML = STATE.history.slice(0,5).map(h => `
-    <div class="hist-item">
-      <div class="hist-icon" style="background:rgba(108,142,255,.12);">🎨</div>
-      <div class="hist-info"><h4>${h.topic}</h4><p>${h.style} · ${h.slides} slayd · ${h.date}</p></div>
-      <div class="hist-score">${h.slides}</div>
+}
+
+// ── AI TEST ─────────────────────────────────────
+const TOPICS=['Python','Matematika','Ingliz tili','Tarix','Biologiya','Fizika','Kimyo','IT'];
+function renderTopicSugs(){
+  document.getElementById('topicSuggestions').innerHTML=TOPICS.map(t=>
+    `<button onclick="setTopic('${t}')" style="background:var(--card2);border:1px solid var(--border);color:var(--text);padding:.28rem .75rem;border-radius:50px;font-weight:600;font-size:.72rem;cursor:pointer;">${t}</button>`
+  ).join('');
+}
+function setTopic(t){ document.getElementById('aiTopic').value=t; }
+
+const AI_COUNTS=[5,10,15,20,25,30];
+function renderAiCountPills(){
+  document.getElementById('aiCountPills').innerHTML=AI_COUNTS.map(n=>
+    `<div class="cpill${n===10?' sel':''}" onclick="selCount(${n},this)">${n}</div>`
+  ).join('');
+}
+function selCount(n,el){ S.aiOpts.count=n; document.querySelectorAll('#aiCountPills .cpill').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+function selDiff(d,el){ S.aiOpts.diff=d; el.closest('.choice-grid').querySelectorAll('.choice-btn').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+function selLang(l,el){ S.aiOpts.lang=l; el.closest('.choice-grid').querySelectorAll('.choice-btn').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+
+function aiNextStep(n){
+  if(n===2&&!document.getElementById('aiTopic').value.trim()){ toast('⚠️ Mavzuni kiriting!'); return; }
+  [1,2,3].forEach(i=>{
+    document.getElementById('aiStep'+i).style.display=i===n?'block':'none';
+    document.getElementById('aws'+i).className='wstep'+(i<n?' done':i===n?' active':'');
+  });
+  if(n===3) renderAiConfirm();
+}
+function renderAiConfirm(){
+  const d={easy:'😊 Oson',medium:'😐 O\'rta',hard:'🔥 Qiyin'};
+  const l={uz:'🇺🇿 O\'zbek',ru:'🇷🇺 Rus',en:'🇬🇧 Ingliz'};
+  document.getElementById('aiConfirmCard').innerHTML=`
+    <div class="card-title">✅ Tasdiqlash</div>
+    <div style="display:flex;flex-direction:column;gap:.35rem;font-size:.82rem;">
+      <div>📝 Mavzu: <strong>${document.getElementById('aiTopic').value}</strong></div>
+      <div>📊 Savollar: <strong>${S.aiOpts.count} ta</strong></div>
+      <div>🎯 Qiyinlik: <strong>${d[S.aiOpts.diff]}</strong></div>
+      <div>🌐 Til: <strong>${l[S.aiOpts.lang]}</strong></div>
+    </div>`;
+}
+
+async function startAiGen(){
+  document.getElementById('aiStep3').style.display='none';
+  document.getElementById('aiGenProgress').style.display='block';
+  const steps=[{t:'🧠 Mavzu tahlil qilinmoqda...',p:25},{t:'✍️ Savollar yozilmoqda...',p:55},{t:'🔍 Javoblar tekshirilmoqda...',p:80},{t:'✅ Test tayyorlanmoqda...',p:100}];
+  for(const s of steps){ await sleep(950); document.getElementById('aiPbar').style.width=s.p+'%'; document.getElementById('aiPbarText').textContent=s.t; }
+  await sleep(300); S.credits-=2;
+  const topic=document.getElementById('aiTopic').value||'Test';
+  startDemoQuiz(topic);
+}
+
+// ── PDF ───────────────────────────────────────
+function triggerPdfUpload(){ document.getElementById('pdfInput').click(); }
+function handlePdfSelect(input){
+  const f=input.files[0]; if(!f) return;
+  if(!f.name.toLowerCase().endsWith('.pdf')){ toast('❌ PDF fayl yuklang!'); return; }
+  document.getElementById('pdfFileInfo').style.display='block';
+  document.getElementById('pdfFileName').textContent=f.name;
+  document.getElementById('pdfFileSize').textContent=(f.size/1024).toFixed(0)+' KB';
+}
+function clearPdf(){ document.getElementById('pdfInput').value=''; document.getElementById('pdfFileInfo').style.display='none'; }
+async function uploadPdf(){
+  if(!document.getElementById('pdfInput').files[0]){ toast('⚠️ PDF faylni tanlang!'); return; }
+  if(S.credits<1){ toast('⚡ Kredit yetarli emas!'); showPage('credits'); return; }
+  document.querySelector('#page-pdf .section').style.display='none';
+  document.getElementById('pdfProcessing').style.display='block';
+  const steps=[{t:'🔍 Matn o\'qilmoqda...',p:25},{t:'📝 Savollar generatsiya...',p:55},{t:'🧠 AI tekshirmoqda...',p:85},{t:'✅ Test tayyor...',p:100}];
+  for(const s of steps){ await sleep(1000); document.getElementById('pdfPbar').style.width=s.p+'%'; document.getElementById('pdfPbarText').textContent=s.t; }
+  await sleep(300); S.credits--;
+  const name=document.getElementById('pdfName').value||document.getElementById('pdfFileName').textContent.replace('.pdf','');
+  S.tests.push({id:'test_'+Date.now(),name,source:'pdf',count:10,created:new Date().toLocaleDateString()});
+  startDemoQuiz(name);
+}
+
+// ── QUIZ ──────────────────────────────────────
+const DEMO_QS=[
+  {q:'Python da list yaratish uchun:',opts:['(  )','[  ]','{  }','<  >'],ans:1,exp:'[] — kvadrat qavs'},
+  {q:'HTML da sarlavha tegi:',opts:['<p>','<head>','<h1>','<title>'],ans:2,exp:'<h1> birinchi darajali sarlavha'},
+  {q:'Internet protokoli:',opts:['FTP','HTTP','SSH','SMTP'],ans:1,exp:'HTTP — HyperText Transfer Protocol'},
+  {q:'Python da funktsiya yaratish:',opts:['func','define','def','function'],ans:2,exp:'def — define qisqartmasi'},
+  {q:'CSS da matn rangi:',opts:['text-color','font-color','color','text-style'],ans:2,exp:'color: red;'},
+  {q:'SQL da ma\'lumot olish:',opts:['GET','SELECT','FETCH','TAKE'],ans:1,exp:'SELECT * FROM table'},
+  {q:'Git da saqlash buyrug\'i:',opts:['git save','git commit','git push','git store'],ans:1,exp:'git commit -m "msg"'},
+  {q:'2 ** 10 = ?',opts:['512','1024','2048','256'],ans:1,exp:'2^10 = 1024'},
+  {q:'Loop turlari:',opts:['for, while','do, loop','repeat, cycle','run, go'],ans:0,exp:'for va while'},
+  {q:'JSON nima uchun:',opts:['Rasm','Ma\'lumot almashinuvi','Video','Audio'],ans:1,exp:'JavaScript Object Notation'},
+];
+
+let quizTimer=null, timeLeft=1200;
+function startDemoQuiz(name){
+  S.quiz={questions:DEMO_QS.slice().sort(()=>Math.random()-.5).slice(0,5),current:0,answers:new Array(5).fill(-1),score:0,testName:name};
+  showPage('quiz'); renderQuizQ(); startQuizTimer();
+  if(tg){ tg.BackButton.show(); tg.BackButton.onClick(()=>{ clearInterval(quizTimer); showPage('home'); tg.BackButton.hide(); }); }
+}
+function startQuizTimer(){
+  clearInterval(quizTimer); timeLeft=S.quiz.questions.length*60;
+  quizTimer=setInterval(()=>{
+    timeLeft--;
+    const m=Math.floor(timeLeft/60),s=timeLeft%60;
+    const el=document.getElementById('qTimer');
+    el.textContent=`⏱ ${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    el.classList.toggle('danger',timeLeft<=30);
+    if(timeLeft<=0){ clearInterval(quizTimer); finishQuiz(); }
+  },1000);
+}
+function renderQuizQ(){
+  const {questions,current,answers}=S.quiz;
+  const n=questions.length,q=questions[current],answered=answers[current]!==-1;
+  document.getElementById('qCounter').textContent=`${current+1} / ${n}`;
+  document.getElementById('qPbar').style.width=((current)/n*100).toFixed(0)+'%';
+  document.getElementById('qNum').textContent=`SAVOL ${current+1}`;
+  document.getElementById('qText').textContent=q.q;
+  const letters=['A','B','C','D'];
+  document.getElementById('qOptions').innerHTML=q.opts.map((o,i)=>{
+    let cls='opt';
+    if(answered){ if(i===q.ans) cls='opt correct'; else if(i===answers[current]) cls='opt wrong'; }
+    else if(i===answers[current]) cls='opt sel';
+    const onclick=answered?'':`onclick="selectOpt(${i})"`;
+    return `<div class="${cls}" ${onclick}><div class="opt-letter">${letters[i]}</div><span style="font-size:.85rem;font-weight:600;">${o}</span></div>`;
+  }).join('')+(answered&&q.exp?`<div style="background:rgba(91,123,255,.07);border:1px solid rgba(91,123,255,.18);border-radius:11px;padding:.7rem;font-size:.75rem;color:var(--muted);margin-top:.4rem;">💡 ${q.exp}</div>`:'');
+  const btn=document.getElementById('qNextBtn');
+  btn.textContent=current<n-1?'→':'✅ Yakunlash';
+  btn.onclick=current<n-1?quizNext:finishQuiz;
+  document.getElementById('qDots').innerHTML=questions.map((_,i)=>`<div class="qdot${answers[i]!==-1?' ans':''}${i===current?' cur':''}" onclick="jumpQ(${i})"></div>`).join('');
+}
+function selectOpt(i){ if(S.quiz.answers[S.quiz.current]!==-1) return; S.quiz.answers[S.quiz.current]=i; if(i===S.quiz.questions[S.quiz.current].ans) S.quiz.score++; if(tg) tg.HapticFeedback?.impactOccurred('light'); renderQuizQ(); }
+function quizNext(){ if(S.quiz.current<S.quiz.questions.length-1){ S.quiz.current++; renderQuizQ(); } }
+function quizPrev(){ if(S.quiz.current>0){ S.quiz.current--; renderQuizQ(); } }
+function jumpQ(i){ S.quiz.current=i; renderQuizQ(); }
+function retryQuiz(){ S.quiz.current=0; S.quiz.answers=new Array(S.quiz.questions.length).fill(-1); S.quiz.score=0; showPage('quiz'); renderQuizQ(); }
+
+function finishQuiz(){
+  clearInterval(quizTimer);
+  if(tg){ tg.BackButton.hide(); tg.HapticFeedback?.notificationOccurred('success'); }
+  const {score,questions,testName}=S.quiz;
+  const n=questions.length,pct=Math.round(score/n*100);
+  const color=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
+  const emoji=pct>=80?'🏆':pct>=50?'💪':'📚';
+  S.tests.push({name:testName,score:pct,date:new Date().toLocaleDateString()});
+  document.getElementById('resultHero').innerHTML=`
+    <div class="rh-ring" style="border-color:${color};"><div class="rh-pct" style="color:${color};">${pct}%</div><div class="rh-sub">${score}/${n} to'g'ri</div></div>
+    <div style="font-family:'Sora',sans-serif;font-weight:800;font-size:1.1rem;margin-bottom:.2rem;">${emoji} Test yakunlandi!</div>
+    <div style="font-size:.78rem;color:var(--muted);">${testName}</div>`;
+  document.getElementById('resStats').innerHTML=`
+    <div class="rs"><div class="rv" style="color:var(--green);">${score}</div><div class="rl">✅ To'g'ri</div></div>
+    <div class="rs"><div class="rv" style="color:var(--red);">${n-score}</div><div class="rl">❌ Xato</div></div>
+    <div class="rs"><div class="rv" style="color:var(--accent);">${pct}%</div><div class="rl">📊 Ball</div></div>`;
+  showPage('result');
+}
+
+// ── PREMIUM & CREDITS ─────────────────────────
+const PKGS=[
+  {id:'c10',icon:'⚡',name:'10 ta kredit',price:'9,900',credits:10},
+  {id:'c30',icon:'⚡⚡',name:'30 ta kredit',price:'24,900',credits:30,popular:true},
+  {id:'c100',icon:'🔥',name:'100 ta kredit',price:'69,900',credits:100},
+];
+const PLANS=[
+  {id:'month',name:'1 Oy',price:'49,000',priceval:49000,days:30,credits:50},
+  {id:'quart',name:'3 Oy 🔥',price:'99,000',priceval:99000,days:90,credits:150,popular:true},
+  {id:'year',name:'1 Yil ⚡',price:'299,000',priceval:299000,days:365,credits:600},
+];
+function renderCreditPackages(){
+  document.getElementById('creditPackages').innerHTML=PKGS.map(p=>`
+    <div class="pkg-card${p.popular?' pop':''}" onclick="toast('💳 ${p.name} — ${p.price} so\'m')">
+      ${p.popular?'<div class="pkg-hot">🔥 Ommabop</div>':''}
+      <div class="pkg-icon" style="background:rgba(245,158,11,.08);">${p.icon}</div>
+      <div class="pkg-body"><div class="pkg-name">${p.name}</div><div class="pkg-price">${p.price} so'm</div></div>
     </div>`).join('');
 }
-
-function updateProfile() {
-  const isPrem = STATE.user.plan !== 'free';
-  const planName = isPrem ? PLANS[STATE.user.plan]?.name : 'Bepul tarif';
-  document.getElementById('profName').textContent = STATE.user.name;
-  const badge = document.getElementById('profPlanBadge');
-  badge.textContent = isPrem ? `👑 ${planName}` : '🎁 Bepul tarif';
-  badge.className = 'prof-plan ' + (isPrem ? 'plan-premium' : 'plan-free');
-  document.getElementById('rCount').textContent = STATE.user.referrals;
-  document.getElementById('rEarned').textContent = STATE.user.earned.toLocaleString('ru-RU');
-  document.getElementById('rBalance').textContent = STATE.user.balance.toLocaleString('ru-RU');
-  const uid = urlUid || '12345';
-  document.getElementById('refLink').textContent = `https://t.me/YourBot?start=REF${uid}`;
+function renderPremiumPlans(){
+  document.getElementById('premiumPlans').innerHTML=PLANS.map(p=>`
+    <div class="plan-card${p.popular?' pop':''}" id="plan_${p.id}" onclick="selPlan('${p.id}')">
+      ${p.popular?'<div class="pkg-hot">🔥 Ommabop</div>':''}
+      <div class="pc-top">
+        <div><div class="pc-name">${p.name}</div><div class="pc-sub">${p.days} kun</div></div>
+        <div style="text-align:right;"><div class="pc-price">${p.price}</div><div class="pc-sub">so'm</div></div>
+      </div>
+      <div class="pc-feats">
+        <span class="pc-feat">♾️ Cheksiz PDF</span>
+        <span class="pc-feat">♾️ Cheksiz AI</span>
+        <span class="pc-feat">✍️ Cheksiz Maqola</span>
+        <span class="pc-feat">⚡ +${p.credits} kredit</span>
+      </div>
+    </div>`).join('');
+}
+function selPlan(id){
+  S.selPlanId=id;
+  document.querySelectorAll('.plan-card').forEach(c=>c.classList.remove('sel'));
+  document.getElementById('plan_'+id)?.classList.add('sel');
+  const plan=PLANS.find(p=>p.id===id);
+  document.getElementById('payMethodCard').style.display='block';
+  document.getElementById('payBtn').textContent=`💳 To'lash — ${plan.price} so'm`;
+}
+function selPayMethod(m,el){ S.payMethod=m; document.querySelectorAll('.pay-m').forEach(e=>e.classList.remove('sel')); el.classList.add('sel'); }
+async function processPay(){
+  const plan=PLANS.find(p=>p.id===S.selPlanId); if(!plan) return;
+  document.getElementById('payBtn').textContent='⏳ Kutib turing...';
+  document.getElementById('payBtn').disabled=true;
+  await sleep(2200);
+  S.isPremium=true; S.plan=plan.id; S.credits+=plan.credits; updateCreditsDisplay();
+  toast('🎉 Premium faollashtirildi!');
+  document.getElementById('payBtn').textContent='✅ Faollashtirildi!';
+  updateProfile();
+  if(tg) tg.HapticFeedback?.notificationOccurred('success');
 }
 
-// ── REFERRAL ──────────────────────────────────────
-function copyRefLink() {
-  const link = document.getElementById('refLink').textContent;
-  navigator.clipboard?.writeText(link).then(() => showToast('📋 Havola nusxa olindi!'));
-  if (tg) tg.HapticFeedback?.impactOccurred('light');
+// ── GROUP ─────────────────────────────────────
+function createSession(){ const code='QUIZ'+Math.floor(1000+Math.random()*9000); toast('✅ Sessiya: '+code); navigator.clipboard?.writeText(code); }
+function joinSession(){ const code=document.getElementById('sessionCode').value.trim().toUpperCase(); if(code.length<4){ toast('⚠️ Kodni kiriting!'); return; } toast('✅ '+code+' sessiyasiga qo\'shilindi!'); setTimeout(()=>startDemoQuiz('Guruh testi'),500); }
+function renderLeaderboard(){
+  const l=[{name:'Sardor',score:95,icon:'🥇'},{name:'Malika',score:88,icon:'🥈'},{name:'Bobur',score:82,icon:'🥉'},{name:'Zulfiya',score:76,icon:'4️⃣'},{name:'Jasur',score:71,icon:'5️⃣'}];
+  document.getElementById('leaderboard').innerHTML=l.map(x=>`<div style="display:flex;align-items:center;gap:.65rem;padding:.6rem;background:var(--card);border-radius:11px;margin-bottom:.45rem;border:1px solid var(--border);">
+    <div style="font-size:1rem;">${x.icon}</div><div style="flex:1;font-weight:700;font-size:.82rem;">${x.name}</div>
+    <div style="font-family:'Sora',sans-serif;font-weight:800;color:var(--accent);">${x.score}%</div></div>`).join('');
 }
 
-function shareRefLink() {
-  const link = document.getElementById('refLink').textContent;
-  if (tg) tg.switchInlineQuery(`🎨 AI Presentation Bot!\n${link}`, ['users']);
-  else showToast('Telegram da oching!');
+// ── PRESENTATION ──────────────────────────────
+const PRES_STYLES=[{id:'business',icon:'💼',name:'Business'},{id:'creative',icon:'🎨',name:'Creative'},{id:'academic',icon:'🎓',name:'Academic'},{id:'startup',icon:'🚀',name:'Startup'}];
+function renderPresOptions(){
+  document.getElementById('presCountPills').innerHTML=[5,8,10,15,20].map(n=>`<div class="cpill${n===10?' sel':''}" onclick="selPresCount(${n},this)">${n}</div>`).join('');
+  document.getElementById('presStyles').innerHTML=PRES_STYLES.map((s,i)=>`<div class="choice-btn${i===0?' sel':''}" onclick="selPresStyle('${s.id}',this)"><div class="cb-icon">${s.icon}</div><div class="cb-name">${s.name}</div></div>`).join('');
+}
+function selPresCount(n,el){ S.presOpts.slides=n; document.querySelectorAll('#presCountPills .cpill').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+function selPresStyle(s,el){ S.presOpts.style=s; el.closest('#presStyles').querySelectorAll('.choice-btn').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+async function startPresGen(){
+  const topic=document.getElementById('presTitle').value.trim();
+  if(!topic){ toast('⚠️ Mavzuni kiriting!'); return; }
+  if(S.credits<3){ toast('⚡ 3 kredit kerak!'); showPage('credits'); return; }
+  document.querySelector('#page-presentation .section').style.display='none';
+  document.getElementById('presGenProgress').style.display='block';
+  const steps=[{t:'🧠 Mavzu tahlil...',p:20},{t:'📝 Slaydlar yaratilmoqda...',p:50},{t:'🎨 Dizayn...',p:80},{t:'📦 Fayl tayyor...',p:100}];
+  for(const s of steps){ await sleep(950); document.getElementById('presPbar').style.width=s.p+'%'; document.getElementById('presPbarText').textContent=s.t; }
+  await sleep(300); S.credits-=3; updateCreditsDisplay();
+  toast('✅ Prezentatsiya tayyor!');
+  document.querySelector('#page-presentation .section').style.display='block';
+  document.getElementById('presGenProgress').style.display='none';
 }
 
-// ── UTILS ─────────────────────────────────────────
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+// ── REFERRAL ──────────────────────────────────
+function copyRef(){ navigator.clipboard?.writeText(document.getElementById('refLink').textContent).then(()=>toast('📋 Havola nusxa olindi!')); if(tg) tg.HapticFeedback?.impactOccurred('light'); }
+function shareRef(){ if(tg) tg.switchInlineQuery('⚡ QuizBot Pro!\n'+document.getElementById('refLink').textContent,['users']); else toast('Telegram da oching!'); }
 
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+// ── PROFILE & CREDITS ─────────────────────────
+function updateProfile(){
+  document.getElementById('profName').textContent=S.name;
+  const badge=document.getElementById('profPlan');
+  badge.textContent=S.isPremium?'👑 Premium':'🎁 Bepul tarif';
+  badge.className='prof-plan '+(S.isPremium?'plan-premium':'plan-free');
+  document.getElementById('pTests').textContent=S.tests.length;
+  document.getElementById('pCredit').textContent=S.credits;
 }
+function updateCredits(){ document.getElementById('creditsNum').textContent=S.credits; document.getElementById('pdfCreditShow').textContent=S.credits; }
+function updateCreditsDisplay(){ document.getElementById('creditCount').textContent=S.credits; document.getElementById('creditsNum').textContent=S.credits; document.getElementById('pdfCreditShow').textContent=S.credits; }
 
-// ── START ─────────────────────────────────────────
+// ── TOAST ─────────────────────────────────────
+function toast(msg){
+  const wrap=document.getElementById('toastWrap');
+  const el=document.createElement('div');
+  el.className='toast'; el.textContent=msg;
+  wrap.appendChild(el);
+  requestAnimationFrame(()=>{ requestAnimationFrame(()=>el.classList.add('show')); });
+  setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=>el.remove(),300); },2500);
+}
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// ── INIT ──────────────────────────────────────
+function init(){
+  buildNav(); initBanners(); renderTopicSugs(); renderAiCountPills();
+  renderCreditPackages(); renderPremiumPlans(); renderLeaderboard();
+  renderPresOptions(); renderArticleUI();
+  document.getElementById('helloText').textContent='⚡ Salom, '+S.name+'!';
+  updateCreditsDisplay();
+}
 init();
 </script>
 </body>
