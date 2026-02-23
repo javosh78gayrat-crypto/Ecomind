@@ -313,7 +313,7 @@ select option{background:var(--bg2);}
   <div class="phead">
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div>
-        <h1 id="helloText">⚡ QuizBot Pro</h1>
+        <h1 id="helloText">⚡ Slide Mind</h1>
         <p>Yarating, mashq qiling, ulashing.</p>
       </div>
       <div class="credit-pill" onclick="showPage('credits')">
@@ -879,6 +879,31 @@ const ART_GEN_STEPS=[
   {id:'polish',icon:'✨',text:'Matn sayqallanmoqda va tekshirilmoqda...'},
 ];
 
+@router.message(F.document)
+async def handle_pdf(message: Message):
+    if message.document.mime_type == "application/pdf":
+        uid = message.from_user.id
+        if not use_credit(uid, 5): # PDF tahlili qimmatroq - 5 kredit
+            return await message.answer("❌ PDF tahlil qilish uchun 5 kredit kerak!")
+
+        msg = await message.answer("📥 PDF yuklanmoqda va o'qilmoqda...")
+        
+        file = await message.bot.get_file(message.document.file_id)
+        file_bytes = await message.bot.download_file(file.file_path)
+        
+        text = extract_text_from_pdf(file_bytes.read())
+        
+        if text:
+            await msg.edit_text("🧐 <b>Matn tahlil qilinmoqda...</b>\nAI test tuzmoqda.")
+            quiz = await generate_quiz_ai(text, count=15)
+            if quiz:
+                await msg.edit_text(f"✅ PDF asosida {len(quiz)} ta savol yaratildi!")
+                # Quizni foydalanuvchiga yuborish
+            else:
+                await msg.edit_text("❌ Matn mazmuni bo'yicha test tuzib bo'lmadi.")
+        else:
+            await msg.edit_text("❌ PDF ichidan matn topilmadi yoki fayl juda katta.")
+
 function renderArticleUI(){
   // Types
   document.getElementById('articleTypeGrid').innerHTML=ART_TYPES.map(t=>`
@@ -954,18 +979,25 @@ function renderArtConfirm(){
     </div>`;
 }
 
-async function startArticleGen(){
-  if(S.credits<2){ toast('⚡ 2 kredit kerak!'); showPage('credits'); return; }
-  document.getElementById('artStep3').style.display='none';
-  document.getElementById('artGenProgress').style.display='block';
+function startArticleGen() {
+  const topic = document.getElementById('artTopic').value;
+  if(!topic) return toast("Mavzu yozing!");
 
-  // Render gen steps
-  document.getElementById('artGenSteps').innerHTML=ART_GEN_STEPS.map(s=>
-    `<div class="gen-step" id="gs_${s.id}">
-      <div class="gs-icon">⏳</div>
-      <div class="gs-text">${s.text}</div>
-    </div>`
-  ).join('');
+  const data = {
+    action: "gen_ai_article",
+    topic: topic,
+    type: S.artType,
+    tone: S.artTone,
+    length: S.artLen,
+    keywords: document.getElementById('artKeys').value,
+    lang: "uz"
+  };
+
+  tg.sendData(JSON.stringify(data));
+  tg.close();
+}
+
+  
 
   const pcts=[15,30,50,70,88,100];
   for(let i=0;i<ART_GEN_STEPS.length;i++){
@@ -1001,7 +1033,6 @@ async function startArticleGen(){
     document.getElementById('artTopic').value='';
     document.getElementById('artKeywords').value='';
   },500);
-}
 
 function generateArticleHTML(topic, type, tone, length, keywords){
   const typeObj=ART_TYPES.find(t=>t.id===type)||ART_TYPES[0];
@@ -1249,14 +1280,21 @@ function renderAiConfirm(){
     </div>`;
 }
 
-async function startAiGen(){
-  document.getElementById('aiStep3').style.display='none';
-  document.getElementById('aiGenProgress').style.display='block';
-  const steps=[{t:'🧠 Mavzu tahlil qilinmoqda...',p:25},{t:'✍️ Savollar yozilmoqda...',p:55},{t:'🔍 Javoblar tekshirilmoqda...',p:80},{t:'✅ Test tayyorlanmoqda...',p:100}];
-  for(const s of steps){ await sleep(950); document.getElementById('aiPbar').style.width=s.p+'%'; document.getElementById('aiPbarText').textContent=s.t; }
-  await sleep(300); S.credits-=2;
-  const topic=document.getElementById('aiTopic').value||'Test';
-  startDemoQuiz(topic);
+function startAiGen() {
+  const topic = document.getElementById('aiTopic').value;
+  if(!topic) return toast("Mavzu yozing!");
+  
+  // Haqiqiy AI so'rovini Botga yuboramiz
+  const data = {
+    action: "gen_ai_quiz",
+    topic: topic,
+    count: S.aiCount,
+    diff: S.aiDiff,
+    lang: "uz"
+  };
+  
+  tg.sendData(JSON.stringify(data));
+  tg.close(); // Ma'lumot yuborilgach yopiladi, bot javob qaytaradi
 }
 
 // ── PDF ───────────────────────────────────────
@@ -1365,9 +1403,9 @@ const PKGS=[
   {id:'c100',icon:'🔥',name:'100 ta kredit',price:'69,900',credits:100},
 ];
 const PLANS=[
-  {id:'month',name:'1 Oy',price:'49,000',priceval:49000,days:30,credits:50},
-  {id:'quart',name:'3 Oy 🔥',price:'99,000',priceval:99000,days:90,credits:150,popular:true},
-  {id:'year',name:'1 Yil ⚡',price:'299,000',priceval:299000,days:365,credits:600},
+  {id:'month',name:'1 Oy',price:'24,990',priceval:24990,days:30,credits:50},
+  {id:'quart',name:'3 Oy 🔥',price:'64,990',priceval:64990,days:90,credits:150,popular:true},
+  {id:'year',name:'1 Yil ⚡',price:'150,000',priceval:150000,days:365,credits:1000},
 ];
 function renderCreditPackages(){
   document.getElementById('creditPackages').innerHTML=PKGS.map(p=>`
@@ -1448,7 +1486,7 @@ async function startPresGen(){
 
 // ── REFERRAL ──────────────────────────────────
 function copyRef(){ navigator.clipboard?.writeText(document.getElementById('refLink').textContent).then(()=>toast('📋 Havola nusxa olindi!')); if(tg) tg.HapticFeedback?.impactOccurred('light'); }
-function shareRef(){ if(tg) tg.switchInlineQuery('⚡ QuizBot Pro!\n'+document.getElementById('refLink').textContent,['users']); else toast('Telegram da oching!'); }
+function shareRef(){ if(tg) tg.switchInlineQuery('⚡ Slide Mind!\n'+document.getElementById('refLink').textContent,['users']); else toast('Telegram da oching!'); }
 
 // ── PROFILE & CREDITS ─────────────────────────
 function updateProfile(){
