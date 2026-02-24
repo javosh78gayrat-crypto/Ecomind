@@ -949,58 +949,71 @@ function renderArtConfirm() {
 
 // FIX: startArticleGen — to'g'ri async funksiya, mahalliy animatsiya bilan
 async function startArticleGen() {
-  if (S.credits < 2 && !S.isPremium) {
-    toast('⚡ 2 kredit kerak!'); showPage('credits'); return;
-  }
-  const topic = document.getElementById('artTopic').value.trim();
-  if (!topic) { toast('⚠️ Mavzuni kiriting!'); return; }
-  S.artOpts.keywords = document.getElementById('artKeywords').value.trim();
-
-  // Progress ko'rsatish
-  [1,2,3].forEach(i => { document.getElementById('artStep'+i).style.display = 'none'; });
-  document.getElementById('artGenProgress').style.display = 'block';
-
-  // Gen steps HTML
-  document.getElementById('artGenSteps').innerHTML = ART_GEN_STEPS.map(s =>
-    `<div class="gen-step" id="gs_${s.id}">
-      <div class="gs-icon">⏳</div>
-      <div class="gs-text">${s.text}</div>
-    </div>`
-  ).join('');
-
-  const pcts = [15, 30, 50, 70, 88, 100];
-  for (let i = 0; i < ART_GEN_STEPS.length; i++) {
-    await sleep(800 + Math.random() * 400);
-    if (i > 0) {
-      const prev = document.getElementById('gs_' + ART_GEN_STEPS[i-1].id);
-      if (prev) { prev.className='gen-step done'; prev.querySelector('.gs-icon').textContent='✅'; }
+    if (S.credits < 2 && !S.isPremium) {
+        toast('⚡ 2 kredit kerak!'); showPage('credits'); return;
     }
-    const cur = document.getElementById('gs_' + ART_GEN_STEPS[i].id);
-    if (cur) { cur.className='gen-step active'; cur.querySelector('.gs-icon').textContent=ART_GEN_STEPS[i].icon; }
-    document.getElementById('artPbar').style.width = pcts[i] + '%';
-  }
-  await sleep(600);
-  const last = document.getElementById('gs_' + ART_GEN_STEPS[ART_GEN_STEPS.length-1].id);
-  if (last) { last.className='gen-step done'; last.querySelector('.gs-icon').textContent='✅'; }
+    const topic = document.getElementById('artTopic').value.trim();
+    if (!topic) { toast('⚠️ Mavzuni kiriting!'); return; }
+    
+    S.artOpts.keywords = document.getElementById('artKeywords').value.trim();
 
-  // Kredit ayirish
-  if (!S.isPremium) { S.credits -= 2; updateCreditsDisplay(); }
+    // Progress ko'rsatish
+    [1,2,3].forEach(i => document.getElementById('artStep'+i).style.display = 'none');
+    document.getElementById('artGenProgress').style.display = 'block';
 
-  await sleep(300);
-  showArticleResult(topic);
+    try {
+        // Haqiqiy API ga so'rov yuborish
+        const response = await fetch("http://localhost:8000/api/generate_article", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                topic: topic,
+                type: S.artOpts.type,
+                tone: S.artOpts.tone,
+                length: S.artOpts.length,
+                lang: S.artOpts.lang,
+                keywords: S.artOpts.keywords
+            })
+        });
 
-  // Wizardni reset qilish
-  setTimeout(() => {
-    document.getElementById('artGenProgress').style.display = 'none';
-    document.getElementById('artStep1').style.display = 'block';
-    [1,2,3].forEach(i => {
-      document.getElementById('artws'+i).className = 'wstep' + (i===1 ? ' active' : '');
-    });
-    document.getElementById('artTopic').value    = '';
-    document.getElementById('artKeywords').value = '';
-  }, 500);
+        const data = await response.json();
+
+        if (data.success) {
+            if (!S.isPremium) { S.credits -= 2; updateCreditsDisplay(); }
+            
+            // AI dan kelgan Markdown matnni HTML ga o'tkazish (oddiy versiya)
+            const formattedHTML = data.article
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br/>');
+
+            // Maqolani ekranga chiqarish
+            document.getElementById('articleResultWrap').innerHTML = `
+                <div class="article-title">${topic}</div>
+                <div class="article-divider"></div>
+                <div class="article-body"><p>${formattedHTML}</p></div>
+                <div class="article-action-bar">
+                    <button class="btn btn-teal btn-sm" onclick="copyArticle()" style="width:100%;">📋 Nusxa olish</button>
+                    <button class="btn btn-outline btn-sm" onclick="shareArticle()" style="width:100%;">📤 Ulashish</button>
+                </div>`;
+            
+            document.getElementById('artGenProgress').style.display = 'none';
+            showPage('article-result');
+            toast('✅ Maqola tayyor!');
+        } else {
+            toast('❌ Xato: ' + data.error);
+            document.getElementById('artGenProgress').style.display = 'none';
+            document.getElementById('artStep1').style.display = 'block';
+        }
+    } catch (err) {
+        toast('❌ Serverga ulanib bo'lmadi!');
+        document.getElementById('artGenProgress').style.display = 'none';
+        document.getElementById('artStep1').style.display = 'block';
+    }
 }
-
 // ─── Article content generators ────────────────
 function generateArticleHTML(topic, type, tone, length, keywords) {
   const typeObj = ART_TYPES.find(t => t.id === type) || ART_TYPES[0];
@@ -1250,43 +1263,56 @@ function renderAiConfirm() {
 
 // FIX: startAiGen — to'g'ri property nomlar, tg.close() olib tashlandi
 async function startAiGen() {
-  if (S.credits < 2 && !S.isPremium) {
-    toast('⚡ 2 kredit kerak!'); showPage('credits'); return;
-  }
-  const topic = document.getElementById('aiTopic').value.trim();
-  if (!topic) { toast('⚠️ Mavzuni kiriting!'); return; }
+    if (S.credits < 2 && !S.isPremium) {
+        toast('⚡ 2 kredit kerak!'); showPage('credits'); return;
+    }
+    const topic = document.getElementById('aiTopic').value.trim();
+    if (!topic) { toast('⚠️ Mavzuni kiriting!'); return; }
 
-  [1,2,3].forEach(i => { document.getElementById('aiStep'+i).style.display = 'none'; });
-  document.getElementById('aiGenProgress').style.display = 'block';
+    [1,2,3].forEach(i => document.getElementById('aiStep'+i).style.display = 'none');
+    document.getElementById('aiGenProgress').style.display = 'block';
 
-  const steps = [
-    {t:'Mavzu tahlil qilinmoqda...', p:20},
-    {t:'Savollar tuzilmoqda...', p:45},
-    {t:'Javoblar tekshirilmoqda...', p:70},
-    {t:'Test sayqallanmoqda...', p:90},
-    {t:'Tayyor!', p:100},
-  ];
-  for (const s of steps) {
-    await sleep(700 + Math.random()*400);
-    document.getElementById('aiPbar').style.width    = s.p + '%';
-    document.getElementById('aiPbarText').textContent = s.t;
-  }
+    try {
+        const response = await fetch("http://localhost:8000/api/generate_quiz", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                topic: topic,
+                count: S.aiOpts.count,
+                diff: S.aiOpts.diff,
+                lang: S.aiOpts.lang
+            })
+        });
 
-  // Botga ma'lumot yuborish (agar Telegram ichida)
-  if (tg?.sendData) {
-    const payload = JSON.stringify({
-      action: 'gen_ai_quiz',
-      topic:  topic,
-      count:  S.aiOpts.count,   // FIX: S.aiOpts.count
-      diff:   S.aiOpts.diff,    // FIX: S.aiOpts.diff
-      lang:   S.aiOpts.lang,    // FIX: S.aiOpts.lang
-    });
-    tg.sendData(payload);
-  } else {
-    // Brauzerda test uchun demo quiz ko'rsatish
-    if (!S.isPremium) { S.credits -= 2; updateCreditsDisplay(); }
-    startDemoQuiz(topic);
-  }
+        const data = await response.json();
+
+        if (data.success && data.quiz.length > 0) {
+            if (!S.isPremium) { S.credits -= 2; updateCreditsDisplay(); }
+            
+            // Backend'dan kelgan real testlarni S.quiz ga saqlaymiz
+            S.quiz = { 
+                questions: data.quiz, 
+                current: 0, 
+                answers: new Array(data.quiz.length).fill(-1), 
+                score: 0, 
+                testName: topic 
+            };
+            
+            document.getElementById('aiGenProgress').style.display = 'none';
+            showPage('quiz');
+            renderQuizQ();
+            startQuizTimer();
+        } else {
+            toast('❌ Xato: ' + (data.error || 'Test tuzib bo\'lmadi'));
+            document.getElementById('aiGenProgress').style.display = 'none';
+            document.getElementById('aiStep1').style.display = 'block';
+        }
+    } catch (err) {
+        toast('❌ Serverga ulanib bo\'lmadi!');
+        document.getElementById('aiGenProgress').style.display = 'none';
+        document.getElementById('aiStep1').style.display = 'block';
+    }
+}
 
   // Wizardni reset
   setTimeout(() => {
@@ -1318,41 +1344,54 @@ function clearPdf() {
 }
 
 async function uploadPdf() {
-  if (!document.getElementById('pdfInput').files[0]) {
-    toast('⚠️ PDF faylni tanlang!'); return;
-  }
-  if (S.credits < 1 && !S.isPremium) {
-    toast('⚡ Kredit yetarli emas!'); showPage('credits'); return;
-  }
-  document.getElementById('pdfSection').style.display     = 'none';
-  document.getElementById('pdfProcessing').style.display  = 'block';
+    const fileInput = document.getElementById('pdfInput');
+    if (!fileInput.files[0]) { toast('⚠️ PDF faylni tanlang!'); return; }
+    
+    if (S.credits < 1 && !S.isPremium) {
+        toast('⚡ Kredit yetarli emas!'); showPage('credits'); return;
+    }
 
-  const steps = [
-    {t:"🔍 Matn o'qilmoqda...", p:25},
-    {t:'📝 Savollar generatsiya...', p:55},
-    {t:'🧠 AI tekshirmoqda...', p:85},
-    {t:'✅ Test tayyor!', p:100},
-  ];
-  for (const s of steps) {
-    await sleep(1000);
-    document.getElementById('pdfPbar').style.width    = s.p + '%';
-    document.getElementById('pdfPbarText').textContent= s.t;
-  }
-  await sleep(300);
-  if (!S.isPremium) { S.credits--; updateCreditsDisplay(); }
+    document.getElementById('pdfSection').style.display = 'none';
+    document.getElementById('pdfProcessing').style.display = 'block';
 
-  const name = document.getElementById('pdfName').value ||
-               document.getElementById('pdfFileName').textContent.replace('.pdf','');
-  S.tests.push({id:'test_'+Date.now(), name, source:'pdf', count:10, created:new Date().toLocaleDateString()});
-  startDemoQuiz(name);
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
 
-  // Reset PDF sahifasi
-  setTimeout(() => {
-    document.getElementById('pdfSection').style.display    = 'block';
-    document.getElementById('pdfProcessing').style.display = 'none';
-    clearPdf();
-    document.getElementById('pdfName').value = '';
-  }, 500);
+    try {
+        const response = await fetch("http://localhost:8000/api/upload_pdf", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.quiz.length > 0) {
+            if (!S.isPremium) { S.credits--; updateCreditsDisplay(); }
+            const name = document.getElementById('pdfName').value || fileInput.files[0].name.replace('.pdf', '');
+            
+            S.quiz = { 
+                questions: data.quiz, 
+                current: 0, 
+                answers: new Array(data.quiz.length).fill(-1), 
+                score: 0, 
+                testName: name 
+            };
+            
+            document.getElementById('pdfProcessing').style.display = 'none';
+            clearPdf();
+            showPage('quiz');
+            renderQuizQ();
+            startQuizTimer();
+        } else {
+            toast('❌ Xato: ' + data.error);
+            document.getElementById('pdfProcessing').style.display = 'none';
+            document.getElementById('pdfSection').style.display = 'block';
+        }
+    } catch (err) {
+        toast('❌ Server xatosi!');
+        document.getElementById('pdfProcessing').style.display = 'none';
+        document.getElementById('pdfSection').style.display = 'block';
+    }
 }
 
 // ═══════════════════════════════════════════════
